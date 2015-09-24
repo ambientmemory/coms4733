@@ -1,51 +1,36 @@
 function finalRad = WallFollowProgram(serPort)
     % set constants
     maxDuration = 300; % s
-    maxDistSansBump = 5; % m
-    maxAngleSansBump = 2*pi;
-    maxV = 0.3; % m/s
+    maxV = 0.4; % m/s
     tStart = tic; % s
+    turnAlongWall = pi/16;
+    turnOffWall = 0;
+    angleTurnedSansBump = 0;
     
     % loop values
-    angleSansBump = 0;
-    distSansBump = 0;
-    angleTurned = 0;
     v = maxV;
-    w = v2w(v);
+    angleTurned = 0;
     
-    SetFwdVelAngVelCreate(serPort, v, w);
+    SetFwdVelAngVelCreate(serPort, v, 0);
     
-    while toc(tStart) < maxDuration && ...
-            distSansBump <= maxDistSansBump
-        [bumped, angleTurned_] = bumpCheckReact(serPort);
-        angleTurned = angleTurned + angleTurned_;
-        
-        if bumped
-            DistanceSensorRoomba(serPort);
-            AngleSensorRoomba(serPort);
-            
-            distSansBump = 0;
-            angleSansBump = 0;
-            v = maxV;
-            w = 0;
+    while toc(tStart) < maxDuration
+        [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
+                BumpsWheelDropsSensorsRoomba(serPort);
+        if BumpRight || BumpLeft || BumpFront
+            angleTurned = angleTurned + rotate(serPort, turnAlongWall);
+            turnOffWall = -pi/16;
+            angleTurnedSansBump = 0;
         else
-            v = min(maxV * (1 - angleSansBump / maxAngleSansBump), maxV);
-            display(v)
-            w = v2w(v);
+            rotate(serPort, turnOffWall);
+            angleTurnedSansBump = angleTurnedSansBump + turnOffWall;
+            display(angleTurnedSansBump);
+            if abs(angleTurnedSansBump) > 3*pi/4
+                angleTurnedSansBump = 0;
+                turnOffWall = -turnOffWall;
+            end
         end
         
-        SetFwdVelAngVelCreate(serPort, v, w);
-        
-        distSansBump = distSansBump + DistanceSensorRoomba(serPort);
-        deltaAngle = AngleSensorRoomba(serPort);
-        angleTurned = angleTurned + deltaAngle;
-        angleSansBump = angleSansBump + deltaAngle;
-        
-        if(abs(angleSansBump) > abs(maxAngleSansBump))
-            display deltaAngle
-            rotate(serPort, -angleSansBump);
-            angleSansBump = 0;
-        end
+        SetFwdVelAngVelCreate(serPort, v, 0);
         
         pause(0.1)
     end
@@ -58,7 +43,7 @@ end
 function [bumped, angleTurned] = bumpCheckReact(serPort)
     [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
         BumpsWheelDropsSensorsRoomba(serPort);
-    bumped = BumpRight || BumpLeft || BumpFront;   
+    bumped = BumpRight || BumpLeft || BumpFront;
     display hi
     angleTurned = 0;
     if bumped
@@ -68,7 +53,7 @@ end
 
 function angleTurned = rotate(serPort, angleToTurn)
     v = 0;
-    w = -v2w(v);
+    w = sign(angleToTurn)*v2w(v);
     SetFwdVelAngVelCreate(serPort, v, w);
     angleTurned = 0;
     while abs(angleTurned) < abs(angleToTurn)
