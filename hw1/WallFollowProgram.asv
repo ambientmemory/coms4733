@@ -20,17 +20,16 @@ function finalRad = WallFollowProgram(serPort)
         [bumped, angleTurned_] = bumpCheckReact(serPort);
         angleTurned = angleTurned + angleTurned_;
         
+        v = maxV;
         if bumped
             DistanceSensorRoomba(serPort);
             AngleSensorRoomba(serPort);
             
             distSansBump = 0;
             angleSansBump = 0;
-            v = maxV;
             w = 0;
         else
-            v = min(maxV * (1 - angleSansBump / maxAngleSansBump), maxV);
-            display(v)
+            v= 
             w = v2w(v);
         end
         
