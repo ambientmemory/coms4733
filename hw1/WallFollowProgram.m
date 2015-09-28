@@ -1,3 +1,14 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% COMS W4733 Computational Aspects of Robotics 2015
+%
+% Homework 1
+%
+% Team number: 007 
+% Team leader: e.g. Jane Smith (js1234)
+% Team members: Jett Andersen (jca2136), Piyali Mukherjee (pm2678), Tia Zhao (tzXXXX)
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function finalRad = WallFollowProgram(serPort)
     % set constants
     maxDuration = 300; % s
