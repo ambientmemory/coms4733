@@ -4,8 +4,8 @@
 % Homework 1
 %
 % Team number: 007 
-% Team leader: e.g. Jane Smith (js1234)
-% Team members: Jett Andersen (jca2136), Piyali Mukherjee (pm2678), Tia Zhao (tzXXXX)
+% Team leader: Jett Andersen (jca2136)
+% Team members: Jett Andersen (jca2136), Piyali Mukherjee (pm2678), Tia Zhao (tz2191)
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
