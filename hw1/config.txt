@@ -1,0 +1,8 @@
+wall 0 0
+cliff 0 0
+odometry 0 0
+sonar 0 0
+lidar 0 0
+camera 0 0
+
+com_delay 0
