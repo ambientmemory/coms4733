@@ -1,39 +1,47 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% COMS W4733 Computational Aspects of Robotics 2015
+%
+% Homework 1
+%
+% Team number: 007 
+% Team leader: Jett Andersen (jca2136)
+% Team members: Jett Andersen (jca2136), Piyali Mukherjee (pm2678), Tia Zhao (tz2191)
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function finalRad = WallFollowProgram(serPort)
     % set constants
     maxDuration = 300; % s
     maxV = 0.4; % m/s
-    minV = 0.1; % m/s
     tStart = tic; % s
     turnAlongWall = pi/16;
     turnOffWall = 0;
+    angleTurnedSansBump = 0;
     
     % loop values
     v = maxV;
-    w = 0;
+    angleTurned = 0;
     
-    SetFwdVelAngVelCreate(serPort, v, w);
+    SetFwdVelAngVelCreate(serPort, v, 0);
     
     while toc(tStart) < maxDuration
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
                 BumpsWheelDropsSensorsRoomba(serPort);
-        Wall = WallSensorReadRoomba(serPort);
         if BumpRight || BumpLeft || BumpFront
+            angleTurned = angleTurned + rotate(serPort, turnAlongWall);
             turnOffWall = -pi/16;
-
-            rotate(serPort, turnAlongWall);
-            if BumpFront
-                v = 0;
-            else
-                v = minV;
-            end
-        elseif ~Wall
-            rotate(serPort, turnOffWall);
-            v = maxV;
+            angleTurnedSansBump = 0;
         else
-            v = maxV;
+            rotate(serPort, turnOffWall);
+            angleTurnedSansBump = angleTurnedSansBump + turnOffWall;
+            display(angleTurnedSansBump);
+            if abs(angleTurnedSansBump) > 3*pi/4
+                angleTurnedSansBump = 0;
+                turnOffWall = -turnOffWall;
+            end
         end
         
-        SetFwdVelAngVelCreate(serPort, v, w);
+        SetFwdVelAngVelCreate(serPort, v, 0);
         
         pause(0.1)
     end
