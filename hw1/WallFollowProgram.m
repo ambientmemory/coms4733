@@ -2,35 +2,40 @@ function finalRad = WallFollowProgram(serPort)
     % set constants
     maxDuration = 300; % s
     maxV = 0.4; % m/s
+    minV = 0.1; % m/s
     tStart = tic; % s
     turnAlongWall = pi/16;
     turnOffWall = 0;
-    angleTurnedSansBump = 0;
+    slowFactor = 1;
     
     % loop values
     v = maxV;
-    angleTurned = 0;
+    w = 0;
     
-    SetFwdVelAngVelCreate(serPort, v, 0);
+    SetFwdVelAngVelCreate(serPort, v, w);
     
     while toc(tStart) < maxDuration
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
                 BumpsWheelDropsSensorsRoomba(serPort);
+        Wall = WallSensorReadRoomba(serPort);
         if BumpRight || BumpLeft || BumpFront
-            angleTurned = angleTurned + rotate(serPort, turnAlongWall);
             turnOffWall = -pi/16;
-            angleTurnedSansBump = 0;
-        else
-            rotate(serPort, turnOffWall);
-            angleTurnedSansBump = angleTurnedSansBump + turnOffWall;
-            display(angleTurnedSansBump);
-            if abs(angleTurnedSansBump) > 3*pi/4
-                angleTurnedSansBump = 0;
-                turnOffWall = -turnOffWall;
+            slowFactor = 0.95;
+
+            rotate(serPort, turnAlongWall);
+            if BumpFront
+                v = 0;
+            else
+                v = minV;
             end
+        elseif ~Wall
+            rotate(serPort, turnOffWall);
+            v = maxV; %max(v * slowFactor, minV);
+        else
+            v = maxV;
         end
         
-        SetFwdVelAngVelCreate(serPort, v, 0);
+        SetFwdVelAngVelCreate(serPort, v, w);
         
         pause(0.1)
     end
