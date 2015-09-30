@@ -19,7 +19,7 @@ function finalRad = WallFollowProgram(serPort)
     turnOffWall = 0;
     orientationEps = 3*pi/4;
     pauseTime = 0.1; % s
-    positionEps = maxV * pauseTime * 5;
+    positionEps = maxV * pauseTime * 10;
     
     % loop values
     v = maxV;
