@@ -19,7 +19,11 @@ function finalRad = WallFollowProgram(serPort)
     turnOffWall = 0;
     orientationEps = 3*pi/4;
     pauseTime = 0.1; % s
+<<<<<<< HEAD
     positionEps = maxV * pauseTime * 10;
+=======
+    positionEps = maxV * pauseTime * 15;
+>>>>>>> origin/master
     
     % loop values
     v = maxV;
@@ -33,6 +37,7 @@ function finalRad = WallFollowProgram(serPort)
     while toc(tStart) < maxDuration
         
         % Check if back at starting point
+        orientation = orientation + AngleSensorRoomba(serPort);
         position = position + changeInPosition(serPort, orientation);
         normalizedOrientation = mod(orientation + orientationEps/2, 2*pi);
         if norm(position) < positionEps && ...
@@ -40,20 +45,17 @@ function finalRad = WallFollowProgram(serPort)
                 hasStarted && hasLeftStartPos
             break;
         elseif hasStarted && norm(position) >= positionEps
-            if ~hasLeftStartPos
-                hasLeftStartPos = true;
-                orientation = 0;
-            end
+            hasLeftStartPos = true;
             display(position);
-            display(normalizedOrientation);
-        end;
+            display(mod(orientation, 2*pi));
+        end
         
         % Stay near wall
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
                 BumpsWheelDropsSensorsRoomba(serPort);
         Wall = WallSensorReadRoomba(serPort);
         if BumpRight || BumpLeft || BumpFront
-            orientation = orientation + rotate(serPort, turnAlongWall);
+            rotate(serPort, turnAlongWall);
             turnOffWall = -pi/16;
             
             if BumpFront
@@ -62,6 +64,7 @@ function finalRad = WallFollowProgram(serPort)
                 v = maxV;
                 
                 if ~hasStarted
+                    display hihihi
                     hasStarted = true;
                     DistanceSensorRoomba(serPort);
                     position = [0, 0];
@@ -69,7 +72,7 @@ function finalRad = WallFollowProgram(serPort)
                 end
             end
         elseif ~Wall
-            orientation = orientation + rotate(serPort, turnOffWall);
+            rotate(serPort, turnOffWall);
             v = maxV;
         else
             v = maxV;
@@ -90,7 +93,7 @@ function position = changeInPosition(serPort, orientation)
     position = [dx, dy];
 end
 
-function angleTurned = rotate(serPort, angleToTurn)
+function rotate(serPort, angleToTurn)
     v = 0;
     w = sign(angleToTurn)*v2w(v);
     pauseTime = 0.05;
@@ -104,7 +107,6 @@ function angleTurned = rotate(serPort, angleToTurn)
         elapsedTime = elapsedTime + pauseTime;
     end
     
-    angleTurned = AngleSensorRoomba(serPort);
     SetFwdVelAngVelCreate(serPort, 0, 0);
 end
 
