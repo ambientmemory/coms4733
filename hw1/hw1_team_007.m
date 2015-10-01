@@ -9,17 +9,17 @@
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function finalRad = WallFollowProgram(serPort)
+function finalRad = hw1_team_007(serPort)
 
     % set constants
     maxDuration = 300; % s
-    maxV = 0.1; % m/s
+    maxV = 0.2; % m/s
     tStart = tic; % s
-    turnAlongWall = pi/16;
+    turnAlongWall = pi/8;
     turnOffWall = 0;
-    orientationEps = 2*pi;
-    pauseTime = 0.01; % s
-    positionEps = maxV * pauseTime * 50;
+    orientationEps = 3*pi/4;
+    pauseTime = 0.05; % s
+    positionEps = maxV * pauseTime * 20;
     
     % loop values
     v = maxV;
@@ -51,10 +51,15 @@ function finalRad = WallFollowProgram(serPort)
                 BumpsWheelDropsSensorsRoomba(serPort);
         Wall = WallSensorReadRoomba(serPort);
         if BumpRight || BumpLeft || BumpFront
-            reverse(serPort, pauseTime * 3, maxV);
+            reverse(serPort, pauseTime * 2, maxV);
             rotate(serPort, turnAlongWall);
-            turnOffWall = -turnAlongWall/2;
-            v = 0;
+            turnOffWall = -turnAlongWall/4;
+            if BumpFront
+                v = 0;
+            else
+                v = maxV;
+            end
+            
             if ~hasStarted
                 display hihihi
                 hasStarted = true;
@@ -78,6 +83,7 @@ function finalRad = WallFollowProgram(serPort)
     finalRad = orientation;
 end
 
+% Calculates the change in position since the last call
 function position = changeInPosition(serPort, orientation)
     distance = DistanceSensorRoomba(serPort);
     dx = distance * cos(orientation);
@@ -85,6 +91,7 @@ function position = changeInPosition(serPort, orientation)
     position = [dx, dy];
 end
 
+% Moves the robot in reverse for the set time at the set speed
 function reverse(serPort, time, speed)
     SetFwdVelAngVelCreate(serPort, -speed, 0);
     curTime = 0;
@@ -95,6 +102,7 @@ function reverse(serPort, time, speed)
     end
 end
 
+% Rotates the robot at approximately the angle specified
 function rotate(serPort, angleToTurn)
     v = 0;
     w = sign(angleToTurn)*v2w(v);
@@ -102,12 +110,7 @@ function rotate(serPort, angleToTurn)
     elapsedTime = 0;
     
     SetFwdVelAngVelCreate(serPort, v, w);
-    bumped = false;
     while abs(elapsedTime * w) < abs(angleToTurn)% && ~bumped
-        [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
-            BumpsWheelDropsSensorsRoomba(serPort);
-%        bumped = BumpRight || BumpLeft || BumpFront;
-        
         pause(pauseTime);
         elapsedTime = elapsedTime + pauseTime;
     end
