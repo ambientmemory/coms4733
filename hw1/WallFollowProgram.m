@@ -13,17 +13,13 @@ function finalRad = WallFollowProgram(serPort)
 
     % set constants
     maxDuration = 300; % s
-    maxV = 0.4; % m/s
+    maxV = 0.1; % m/s
     tStart = tic; % s
     turnAlongWall = pi/16;
     turnOffWall = 0;
-    orientationEps = 3*pi/4;
+    orientationEps = 2*pi;
     pauseTime = 0.1; % s
-<<<<<<< HEAD
-    positionEps = maxV * pauseTime * 10;
-=======
-    positionEps = maxV * pauseTime * 15;
->>>>>>> origin/master
+    positionEps = maxV * pauseTime * 40;
     
     % loop values
     v = maxV;
@@ -56,20 +52,14 @@ function finalRad = WallFollowProgram(serPort)
         Wall = WallSensorReadRoomba(serPort);
         if BumpRight || BumpLeft || BumpFront
             rotate(serPort, turnAlongWall);
-            turnOffWall = -pi/16;
-            
-            if BumpFront
-                v = 0;
-            else
-                v = maxV;
-                
-                if ~hasStarted
-                    display hihihi
-                    hasStarted = true;
-                    DistanceSensorRoomba(serPort);
-                    position = [0, 0];
-                    orientation = 0;
-                end
+            turnOffWall = -turnAlongWall/2;
+            v = 0;
+            if ~hasStarted
+                display hihihi
+                hasStarted = true;
+                DistanceSensorRoomba(serPort);
+                position = [0, 0];
+                orientation = 0;
             end
         elseif ~Wall
             rotate(serPort, turnOffWall);
