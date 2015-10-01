@@ -18,8 +18,8 @@ function finalRad = WallFollowProgram(serPort)
     turnAlongWall = pi/16;
     turnOffWall = 0;
     orientationEps = 2*pi;
-    pauseTime = 0.1; % s
-    positionEps = maxV * pauseTime * 40;
+    pauseTime = 0.01; % s
+    positionEps = maxV * pauseTime * 50;
     
     % loop values
     v = maxV;
@@ -51,6 +51,7 @@ function finalRad = WallFollowProgram(serPort)
                 BumpsWheelDropsSensorsRoomba(serPort);
         Wall = WallSensorReadRoomba(serPort);
         if BumpRight || BumpLeft || BumpFront
+            reverse(serPort, pauseTime * 3, maxV);
             rotate(serPort, turnAlongWall);
             turnOffWall = -turnAlongWall/2;
             v = 0;
@@ -58,6 +59,7 @@ function finalRad = WallFollowProgram(serPort)
                 display hihihi
                 hasStarted = true;
                 DistanceSensorRoomba(serPort);
+                AngleSensorRoomba(serPort);
                 position = [0, 0];
                 orientation = 0;
             end
@@ -83,16 +85,29 @@ function position = changeInPosition(serPort, orientation)
     position = [dx, dy];
 end
 
+function reverse(serPort, time, speed)
+    SetFwdVelAngVelCreate(serPort, -speed, 0);
+    curTime = 0;
+    pauseTime_ = 0.01;
+    while curTime < time
+        curTime = time + pauseTime_;
+        pause(pauseTime_);
+    end
+end
+
 function rotate(serPort, angleToTurn)
     v = 0;
     w = sign(angleToTurn)*v2w(v);
     pauseTime = 0.05;
     elapsedTime = 0;
     
-    AngleSensorRoomba(serPort);
     SetFwdVelAngVelCreate(serPort, v, w);
-    
-    while abs(elapsedTime * w) < abs(angleToTurn)
+    bumped = false;
+    while abs(elapsedTime * w) < abs(angleToTurn)% && ~bumped
+        [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
+            BumpsWheelDropsSensorsRoomba(serPort);
+%        bumped = BumpRight || BumpLeft || BumpFront;
+        
         pause(pauseTime);
         elapsedTime = elapsedTime + pauseTime;
     end
