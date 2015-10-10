@@ -80,7 +80,7 @@ function finalRad = hw1_team_007(serPort)
     end
     
     SetFwdVelAngVelCreate(serPort, 0, 0);
-    finalRad = orientation;
+     finalRad = orientation;
 end
 
 % Calculates the change in position since the last call
