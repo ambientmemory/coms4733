@@ -40,9 +40,9 @@ function finalRad = hw2_team_007(serPort)
             lastPosition = position;
         end
         
-        % TODO: this doesn't work!!!
+        % TODO: this doesn't quite work!!!
         rotate(serPort, -orientation, pauseTime);
-        orientation = updateOrientation(serPort, orientation);
+        orientation = 0; %updateOrientation(serPort, orientation);
         SetFwdVelAngVelCreate(serPort, v, 0);
         pause(pauseTime);
         position = updatePosition(serPort, position, orientation);
@@ -82,10 +82,9 @@ function [position, orientation] = ...
             SetFwdVelAngVelCreate(serPort, turnV, -v2w(turnV));
         end
         
-        pause(pauseTime);
-        % position might get off after update if orientation changes??
+        % position might get off if things happen wrongly or something? gah
         position = updatePosition(serPort, position, orientation);
-        orientation = updateOrientation(serPort, orientation);
+        orientation = updateOrientation(serPort, orientation)
     end
 end
 
@@ -103,21 +102,6 @@ function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
             break;
         end
     end
-end
-
-% Rotates the robot at approximately the angle specified
-function rotate(serPort, angleToTurn, pauseTime)
-    v = 0;
-    w = sign(angleToTurn)*v2w(v);
-    elapsedTime = 0;
-    
-    SetFwdVelAngVelCreate(serPort, v, w);
-    while abs(elapsedTime * w) < abs(angleToTurn)% && ~bumped
-        pause(pauseTime);
-        elapsedTime = elapsedTime + pauseTime;
-    end
-    
-    SetFwdVelAngVelCreate(serPort, 0, 0);
 end
 
 % Calculates the change in position since the last call
