@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % COMS W4733 Computational Aspects of Robotics 2015
 %
-% Homework 1
+% Homework 2
 %
 % Team number: 007 
 % Team leader: Jett Andersen (jca2136)
