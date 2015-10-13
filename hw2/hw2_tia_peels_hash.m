@@ -48,8 +48,7 @@ function finalRad = hw2_team_010(serPort)
         end
         
         % TODO: this doesn't quite work!!!
-         % rotate(serPort, -orientation, pauseTime);
-         rotate(serPort, position, pauseTime);
+         rotate(serPort, -orientation);
          SetFwdVelAngVelCreate(serPort, v, 0);
          
          orientation = updateOrientation(serPort, orientation);
@@ -84,7 +83,7 @@ function [position, orientation] = ...
             %If either bump sensor was bumped, call moveStraight
             %Executes when forward bump is hit the first time?
             moveStraight(serPort, -maxV, 0.3, false, pauseTime);
-            rotate(serPort, turnAngle, pauseTime);
+            rotate(serPort, -turnAngle);
             
 %             %Updating the necessary params
 %             position = updatePosition(serPort, position, orientation);
@@ -106,6 +105,24 @@ function [position, orientation] = ...
 %         orientation = updateOrientation(serPort, orientation);
     end
 end
+
+%Copied over Jett's rotate function because it appears
+% more reliable 
+function rotate(serPort, angleToTurn)
+    v = 0;
+    w = sign(angleToTurn)*v2w(v);
+    pauseTime = 0.05;
+    elapsedTime = 0;
+    
+    SetFwdVelAngVelCreate(serPort, v, w);
+    while abs(elapsedTime * w) < abs(angleToTurn)% && ~bumped
+        pause(pauseTime);
+        elapsedTime = elapsedTime + pauseTime;
+    end
+    
+    SetFwdVelAngVelCreate(serPort, 0, 0);
+end
+
 
 function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
 %Debug: Called here with: moveStraight(serPort, -/+maxV, 0.3, false, pauseTime);
