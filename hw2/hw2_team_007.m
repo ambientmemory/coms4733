@@ -3,7 +3,7 @@
 %
 % Homework 2
 %
-% Team number: 007 
+% Team number: 10 
 % Team leader: Jett Andersen (jca2136)
 % Team members: Jett Andersen (jca2136), Piyali Mukherjee (pm2678),
 %               Tia Zhao (tz2191)
@@ -26,6 +26,7 @@ function finalRad = hw2_team_007(serPort)
     AngleSensorRoomba(serPort);
     DistanceSensorRoomba(serPort);
     
+    SetFwdVelAngVelCreate(serPort, v, 0);
     % Follows line until wall sensor is read
     while norm(goalPosition - position) > goalPositionEps
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
@@ -41,13 +42,15 @@ function finalRad = hw2_team_007(serPort)
         end
         
         % TODO: this doesn't quite work!!!
-        rotate(serPort, -orientation, pauseTime);
-        orientation = 0; %updateOrientation(serPort, orientation);
+ %       rotateDir = [1, 0, 0];
+        rotate(serPort, -orientation); %, pauseTime
+        orientation = updateOrientation(serPort, orientation); % was set to 0
         SetFwdVelAngVelCreate(serPort, v, 0);
         pause(pauseTime);
         position = updatePosition(serPort, position, orientation);
     end
     
+    SetFwdVelAngVelCreate(serPort, 0, 0);
     finalRad = 0;
 end
 
@@ -72,7 +75,7 @@ function [position, orientation] = ...
             moveStraight(serPort, -maxV, 0.3, false, pauseTime);
             position = updatePosition(serPort, position, orientation);
             
-            rotate(serPort, turnAngle, pauseTime);
+            rotate(serPort, turnAngle); %, pauseTime
             orientation = updateOrientation(serPort, orientation);
         end
         
@@ -84,7 +87,7 @@ function [position, orientation] = ...
         
         % position might get off if things happen wrongly or something? gah
         position = updatePosition(serPort, position, orientation);
-        orientation = updateOrientation(serPort, orientation)
+        orientation = updateOrientation(serPort, orientation);
     end
 end
 
@@ -102,6 +105,22 @@ function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
             break;
         end
     end
+end
+
+% Rotates the robot at approximately the angle specified
+function rotate(serPort, angleToTurn)
+    v = 0;
+    w = sign(angleToTurn)*v2w(v);
+    pauseTime = 0.05;
+    elapsedTime = 0;
+    
+    SetFwdVelAngVelCreate(serPort, v, w);
+    while abs(elapsedTime * w) < abs(angleToTurn)% && ~bumped
+        pause(pauseTime);
+        elapsedTime = elapsedTime + pauseTime;
+    end
+    
+    SetFwdVelAngVelCreate(serPort, 0, 0);
 end
 
 % Calculates the change in position since the last call
