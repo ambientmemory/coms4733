@@ -25,56 +25,70 @@ function finalRad = hw2_team_010(serPort)
     lastPosition = [-goalPositionEps, -goalPositionEps];
     AngleSensorRoomba(serPort);
     DistanceSensorRoomba(serPort);
+    
     SetFwdVelAngVelCreate(serPort, v, 0);
     
     % Follows line until wall sensor is read
     while norm(goalPosition - position) > goalPositionEps
+        
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
                 BumpsWheelDropsSensorsRoomba(serPort);
-       
         Wall = WallSensorReadRoomba(serPort);
+        
+        %If either wall sensor has detected or any of the bump sensors
+            % detected a wall, and we have moved at least > 0.5 m
         if Wall || BumpFront || BumpLeft || BumpRight && ...
-                norm(lastPosition - position) >= goalPositionEps
+                norm(lastPosition - position) > goalPositionEps
+            %update last position before the next iteration    
+            lastPosition = position;
+            %Follow along the wall using this function
             [position, orientation] = ...
                 followWall(serPort, maxV, position, orientation, ...
                     pauseTime);
-            lastPosition = position;
         end
         
         % TODO: this doesn't quite work!!!
-        rotate(serPort, -orientation, pauseTime);
-        orientation = 0; 
-        updateOrientation(serPort, orientation);
-        SetFwdVelAngVelCreate(serPort, v, 0);
-        pause(pauseTime);
-        position = updatePosition(serPort, position, orientation);
+         % rotate(serPort, -orientation, pauseTime);
+         rotate(serPort, position, pauseTime);
+         SetFwdVelAngVelCreate(serPort, v, 0);
+         
+         orientation = updateOrientation(serPort, orientation);
+         position = updatePosition(serPort, position, orientation);
+         pause(pauseTime);
     end
     
     finalRad = 0;
 end
 
+%Follow Wall happens here
 function [position, orientation] = ...
         followWall(serPort, maxV, position, orientation, pauseTime)
+    
+    %initialize certain loop values
     mLineEps = maxV * pauseTime;
     hasNotLeft = true;
     turnAngle = pi/2;
     turnV = maxV/2;
     
-    while abs(position(2)) >= mLineEps || hasNotLeft
+    while (abs(position(2))>= mLineEps) || (hasNotLeft)
         % 1.2 creates buffer where position might oscillate in and out of
-        % mLineEps range
-        if(position(2) >= mLineEps * 1.2)
+        % mLineEps range. Once outside the buffer zone, there is no wall
+        if(position(2) >= (mLineEps * 1.2))
             hasNotLeft = false;
         end
         
+        %Discover who was bumped
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
             BumpsWheelDropsSensorsRoomba(serPort);
-        if BumpFront || BumpLeft || BumpRight
+        if (BumpFront || BumpLeft || BumpRight)
+            %If either bump sensor was bumped, call moveStraight
+            %Executes when forward bump is hit the first time?
             moveStraight(serPort, -maxV, 0.3, false, pauseTime);
-            position = updatePosition(serPort, position, orientation);
-            
             rotate(serPort, turnAngle, pauseTime);
-            orientation = updateOrientation(serPort, orientation);
+            
+%             %Updating the necessary params
+%             position = updatePosition(serPort, position, orientation);
+%             orientation = updateOrientation(serPort, orientation);
         end
         
         if WallSensorReadRoomba(serPort)
@@ -83,21 +97,29 @@ function [position, orientation] = ...
             SetFwdVelAngVelCreate(serPort, turnV, -v2w(turnV));
         end
         
-        % position might get off if things happen wrongly or something? gah
+        %Updating the necessary params
         position = updatePosition(serPort, position, orientation);
         orientation = updateOrientation(serPort, orientation);
+        
+%         % position might get off if things happen wrongly or something? gah
+%         position = updatePosition(serPort, position, orientation);
+%         orientation = updateOrientation(serPort, orientation);
     end
 end
 
 function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
+%Debug: Called here with: moveStraight(serPort, -/+maxV, 0.3, false, pauseTime);
     SetFwdVelAngVelCreate(serPort, v, 0);
     timeMoved = 0;
     while timeMoved < timeToMove
         pause(pauseTime)
         timeMoved = timeMoved + 0.1;
+        %Check if we are still bumped
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
             BumpsWheelDropsSensorsRoomba(serPort);
         bumped = BumpRight || BumpLeft || BumpFront;
+        %Boolean short circuit evaluates always to TRUE as stopOffWall
+        %never changes value
         if bumped || (~WallSensorReadRoomba(serPort) && stopOffWall)
             break;
         end
@@ -110,7 +132,6 @@ function position = updatePosition(serPort, position, orientation)
     dy = distance * sin(orientation);
     position = position + [dx, dy];
 end
-
 function orientation = updateOrientation(serPort, orientation)
     orientation = mod(orientation + AngleSensorRoomba(serPort), 2*pi);
 end
