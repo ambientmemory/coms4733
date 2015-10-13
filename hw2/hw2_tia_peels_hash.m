@@ -16,18 +16,13 @@ function finalRad = hw2_team_010(serPort)
     maxV = 0.5; % m/s
     pauseTime = 0.05; % s
     goalPosition = [4, 0];
-    goalPositionEps = maxV * pauseTime * 20;
-    
-    %Debug:
-    % disp('Goal Position Eps = ');
-    % disp(goalPositionEps);
+    goalPositionEps = maxV * pauseTime * 20; %This value starts with 0.500
     
     % loop values
     v = maxV;
     orientation = 0;
     position = [0, 0];
-    %lastPosition = [-goalPositionEps, -goalPositionEps];
-    lastPosition = [0,0];
+    lastPosition = [-goalPositionEps, -goalPositionEps];
     AngleSensorRoomba(serPort);
     DistanceSensorRoomba(serPort);
     SetFwdVelAngVelCreate(serPort, v, 0);
@@ -39,7 +34,7 @@ function finalRad = hw2_team_010(serPort)
        
         Wall = WallSensorReadRoomba(serPort);
         if Wall || BumpFront || BumpLeft || BumpRight && ...
-                norm(lastPosition - position) > goalPositionEps
+                norm(lastPosition - position) >= goalPositionEps
             [position, orientation] = ...
                 followWall(serPort, maxV, position, orientation, ...
                     pauseTime);
@@ -48,7 +43,8 @@ function finalRad = hw2_team_010(serPort)
         
         % TODO: this doesn't quite work!!!
         rotate(serPort, -orientation, pauseTime);
-        orientation = 0; %updateOrientation(serPort, orientation);
+        orientation = 0; 
+        updateOrientation(serPort, orientation);
         SetFwdVelAngVelCreate(serPort, v, 0);
         pause(pauseTime);
         position = updatePosition(serPort, position, orientation);
@@ -65,7 +61,6 @@ function [position, orientation] = ...
     turnV = maxV/2;
     
     while abs(position(2)) >= mLineEps || hasNotLeft
-        
         % 1.2 creates buffer where position might oscillate in and out of
         % mLineEps range
         if(position(2) >= mLineEps * 1.2)
@@ -90,7 +85,7 @@ function [position, orientation] = ...
         
         % position might get off if things happen wrongly or something? gah
         position = updatePosition(serPort, position, orientation);
-        orientation = updateOrientation(serPort, orientation)
+        orientation = updateOrientation(serPort, orientation);
     end
 end
 
@@ -108,7 +103,6 @@ function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
         end
     end
 end
-
 % Calculates the change in position since the last call
 function position = updatePosition(serPort, position, orientation)
     distance = DistanceSensorRoomba(serPort);
