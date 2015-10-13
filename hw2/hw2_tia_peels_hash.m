@@ -10,7 +10,7 @@
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function finalRad = hw2_team_007(serPort)
+function finalRad = hw2_team_010(serPort)
 
     % set constants
     maxV = 0.5; % m/s
@@ -18,19 +18,25 @@ function finalRad = hw2_team_007(serPort)
     goalPosition = [4, 0];
     goalPositionEps = maxV * pauseTime * 20;
     
+    %Debug:
+    % disp('Goal Position Eps = ');
+    % disp(goalPositionEps);
+    
     % loop values
     v = maxV;
     orientation = 0;
     position = [0, 0];
-    lastPosition = [-goalPositionEps, -goalPositionEps];
+    %lastPosition = [-goalPositionEps, -goalPositionEps];
+    lastPosition = [0,0];
     AngleSensorRoomba(serPort);
     DistanceSensorRoomba(serPort);
+    SetFwdVelAngVelCreate(serPort, v, 0);
     
     % Follows line until wall sensor is read
     while norm(goalPosition - position) > goalPositionEps
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
                 BumpsWheelDropsSensorsRoomba(serPort);
-        
+       
         Wall = WallSensorReadRoomba(serPort);
         if Wall || BumpFront || BumpLeft || BumpRight && ...
                 norm(lastPosition - position) > goalPositionEps
@@ -92,7 +98,6 @@ function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
     SetFwdVelAngVelCreate(serPort, v, 0);
     timeMoved = 0;
     while timeMoved < timeToMove
-
         pause(pauseTime)
         timeMoved = timeMoved + 0.1;
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
@@ -120,6 +125,5 @@ function w = v2w(v)
     % robot facts
     maxWheelV = 0.5; % m/s
     robotRadius = 0.2; % m
-
     w = (maxWheelV - v)/robotRadius;
 end
