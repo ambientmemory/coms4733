@@ -132,6 +132,7 @@ function position = updatePosition(serPort, position, orientation)
 end
 
 function orientation = updateOrientation(serPort, orientation)
+
     orientation = mod(orientation + AngleSensorRoomba(serPort), 2*pi);
 end
 
