@@ -1,16 +1,16 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % COMS W4733 Computational Aspects of Robotics 2015
 %
-% Homework 1
+% Homework 2
 %
-% Team number: 007 
+% Team number: 010 
 % Team leader: Jett Andersen (jca2136)
 % Team members: Jett Andersen (jca2136), Piyali Mukherjee (pm2678),
 %               Tia Zhao (tz2191)
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function finalRad = hw2_team_007(serPort)
+function finalRad = hw2_team_10(serPort)
 
     % set constants
     maxV = 0.5; % m/s
@@ -41,12 +41,12 @@ function finalRad = hw2_team_007(serPort)
         end
         
         % TODO: this doesn't quite work!!!
-        rotate(serPort, -orientation, pauseTime);
-        %orientation = 0; 
-        updateOrientation(serPort, orientation);
+        prev_orientation = orientation; 
+        rotate(serPort, -prev_orientation, pauseTime);
+        new_orientation = 0; %updateOrientation(serPort, orientation);
         SetFwdVelAngVelCreate(serPort, v, 0);
         pause(pauseTime);
-        position = updatePosition(serPort, position, orientation);
+        position = updatePosition(serPort, position, new_orientation);
     end
     
     finalRad = 0;
