@@ -28,32 +28,26 @@ function finalRad = hw2_team_10(serPort)
     
     % Follows line until wall sensor is read
     while norm(goalPosition - position) > goalPositionEps
-        
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
                 BumpsWheelDropsSensorsRoomba(serPort);
         Wall = WallSensorReadRoomba(serPort);
         
         %If we encountered a wall
-        if Wall || BumpFront || BumpLeft || BumpRight 
+        if Wall || BumpFront || BumpLeft || BumpRight %&& ...
+                %norm(lastPosition - position) > goalPositionEps
             [position, orientation] = ...
                 followWall(serPort, maxV, position, orientation, ...
                     pauseTime);
             lastPosition = position;
-        %We are done following the wall and intend to exit    
-        %elseif Wall && (~BumpFront) && (~BumpLeft) && (~BumpRight)
-%             Rotate(serPort, 0, pauseTime);
-%             new_orientation = 0; %updateOrientation(serPort, orientation);
-%             SetFwdVelAngVelCreate(serPort, v, 0);
-%             pause(pauseTime);
-%             position = updatePosition(serPort, position, new_orientation);
-%             %last_position = position;
-        else %There is no wall so m-line straight ahead    
-            Rotate(serPort, -orientation, pauseTime);
-            new_orientation = 0; %updateOrientation(serPort, orientation);
-            SetFwdVelAngVelCreate(serPort, v, 0);
-            pause(pauseTime);
-            position = updatePosition(serPort, position, new_orientation);
         end
+        
+        %We did not encounter a wall and intend to m-line to exit
+        % TODO: this doesn't quite work!!!
+        rotate(serPort, -orientation, pauseTime);
+        new_orientation = 0; %updateOrientation(serPort, orientation);
+        SetFwdVelAngVelCreate(serPort, v, 0);
+        pause(pauseTime);
+        position = updatePosition(serPort, position, new_orientation);
     end
     
     finalRad = 0;
@@ -80,7 +74,7 @@ function [position, orientation] = ...
             moveStraight(serPort, -maxV, 0.3, false, pauseTime);
             position = updatePosition(serPort, position, orientation);
             
-            Rotate(serPort, turnAngle, pauseTime);
+            rotate(serPort, turnAngle, pauseTime);
             orientation = updateOrientation(serPort, orientation);
         end
         
@@ -100,6 +94,7 @@ function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
     SetFwdVelAngVelCreate(serPort, v, 0);
     timeMoved = 0;
     while timeMoved < timeToMove
+
         pause(pauseTime)
         timeMoved = timeMoved + 0.1;
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
@@ -112,7 +107,7 @@ function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
 end
 
 % Rotates the robot at approximately the angle specified
-function Rotate(serPort, angleToTurn, pauseTime)
+function rotate(serPort, angleToTurn, pauseTime)
     v = 0;
     w = sign(angleToTurn)*v2w(v);
     elapsedTime = 0;
