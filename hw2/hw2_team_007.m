@@ -14,23 +14,23 @@ function finalRad = hw2_team_007(serPort)
 
     % set constants
     maxV = 0.5; % m/s
+    turnV = maxV/2;
     pauseTime = 0.05; % s
     goalPosition = [4, 0];
-    goalPositionEps = maxV * pauseTime * 20;
-    
+    goalPositionEps = maxV * pauseTime * 5;
+
     % loop values
-    v = maxV;
     orientation = 0;
     position = [0, 0];
     lastPosition = [-goalPositionEps, -goalPositionEps];
     AngleSensorRoomba(serPort);
     DistanceSensorRoomba(serPort);
-    
+
     % Follows line until wall sensor is read
     while norm(goalPosition - position) > goalPositionEps
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
                 BumpsWheelDropsSensorsRoomba(serPort);
-        
+
         Wall = WallSensorReadRoomba(serPort);
         if Wall || BumpFront || BumpLeft || BumpRight && ...
                 norm(lastPosition - position) > goalPositionEps
@@ -38,18 +38,27 @@ function finalRad = hw2_team_007(serPort)
                 followWall(serPort, maxV, position, orientation, ...
                     pauseTime);
             lastPosition = position;
+            orientation = rotate(serPort, orientation, ...
+                -orientation, pauseTime);
         end
         
-        % TODO: this doesn't quite work!!!
-        rotate(serPort, -orientation, pauseTime);
-        orientation = 0; %updateOrientation(serPort, orientation);
-        SetFwdVelAngVelCreate(serPort, v, 0);
+        v = maxV;
+        w = 0;
+        if(orientation  > 0)
+            v = turnV;
+            w = -v2w(v);
+        elseif(orientation < 0)
+            v = turnV;
+            w = v2w(v);
+        end
+        SetFwdVelAngVelCreate(serPort, v, w);
         pause(pauseTime);
-        position = updatePosition(serPort, position, orientation);
+        position = updatePosition(serPort, position, orientation)
+        orientation = updateOrientation(serPort, orientation);
     end
-    
+
     finalRad = 0;
-end
+    end
 
 function [position, orientation] = ...
         followWall(serPort, maxV, position, orientation, pauseTime)
@@ -57,38 +66,38 @@ function [position, orientation] = ...
     hasNotLeft = true;
     turnAngle = pi/4;
     turnV = maxV/2;
-    
+
     while abs(position(2)) >= mLineEps || hasNotLeft
-        
+
         % 1.2 creates buffer where position might oscillate in and out of
         % mLineEps range
         if(position(2) >= mLineEps * 1.2)
             hasNotLeft = false;
         end
-        
+
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
             BumpsWheelDropsSensorsRoomba(serPort);
         if BumpFront || BumpLeft || BumpRight
             moveStraight(serPort, -maxV, 0.3, false, pauseTime);
             position = updatePosition(serPort, position, orientation);
-            
-            rotate(serPort, turnAngle, pauseTime);
-            orientation = updateOrientation(serPort, orientation);
+
+            orientation = rotate(serPort, orientation, turnAngle, ...
+                pauseTime);
         end
-        
+
         if WallSensorReadRoomba(serPort)
             SetFwdVelAngVelCreate(serPort, turnV, v2w(turnV));
         else
             SetFwdVelAngVelCreate(serPort, turnV, -v2w(turnV));
         end
-        
+
         % position might get off if things happen wrongly or something? gah
         position = updatePosition(serPort, position, orientation);
         orientation = updateOrientation(serPort, orientation);
     end
-end
+    end
 
-function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
+    function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
     SetFwdVelAngVelCreate(serPort, v, 0);
     timeMoved = 0;
     while timeMoved < timeToMove
@@ -105,18 +114,19 @@ function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
 end
 
 % Rotates the robot at approximately the angle specified
-function rotate(serPort, angleToTurn, pauseTime)
+function orientation = rotate(serPort, orientation, angleToTurn, pauseTime)
     v = 0;
     w = sign(angleToTurn)*v2w(v);
-    elapsedTime = 0;
+    startOrientation = orientation;
     
     SetFwdVelAngVelCreate(serPort, v, w);
-    while abs(elapsedTime * w) < abs(angleToTurn)% && ~bumped
+    while abs(orientation - startOrientation) < abs(angleToTurn)
         pause(pauseTime);
-        elapsedTime = elapsedTime + pauseTime;
+        orientation = orientation + AngleSensorRoomba(serPort);
     end
     
     SetFwdVelAngVelCreate(serPort, 0, 0);
+    orientation = normalizeAngle(orientation);
 end
 
 % Calculates the change in position since the last call
@@ -127,10 +137,15 @@ function position = updatePosition(serPort, position, orientation)
     position = position + [dx, dy];
 end
 
-
-
 function orientation = updateOrientation(serPort, orientation)
-    orientation = mod(orientation + AngleSensorRoomba(serPort), 2*pi);
+    orientation = normalizeAngle(orientation + AngleSensorRoomba(serPort));
+end
+
+function angle = normalizeAngle(angle)
+    angle = mod(angle, 2*pi);
+    if(angle > pi)
+        angle = angle - 2*pi;
+    end
 end
 
 function w = v2w(v)
