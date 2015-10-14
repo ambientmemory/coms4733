@@ -33,7 +33,7 @@ function finalRad = hw2_team_10(serPort)
         Wall = WallSensorReadRoomba(serPort);
         
         %If we encountered a wall
-        if Wall || BumpFront || BumpLeft || BumpRight %&& ...
+        if Wall || BumpFront || BumpLeft || BumpRight
              disp('Debug: Found a wall!');
             [position, orientation] = ...
                 followWall(serPort, maxV, position, orientation, ...
@@ -48,12 +48,15 @@ function finalRad = hw2_team_10(serPort)
         disp(orientation);
         %We did not encounter a wall and intend to m-line to exit
         Rotate(serPort, -orientation, pauseTime);
+        Rotate(serPort, orientation, pauseTime);
         new_orientation = 0; %updateOrientation(serPort, orientation);
         SetFwdVelAngVelCreate(serPort, v, 0);
         %Dropping Jett's wisdom all over here
-        updateOrientation(serPort, orientation)
+        updateOrientation(serPort, new_orientation)
         pause(pauseTime);
+        disp('position (outside wall-bumper block) is:');
         position = updatePosition(serPort, position, new_orientation);
+        disp(position);
     end
     
     finalRad = 0;
