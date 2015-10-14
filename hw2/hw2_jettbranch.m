@@ -46,7 +46,7 @@ function finalRad = hw2_team_10(serPort)
         new_orientation = 0; %updateOrientation(serPort, orientation);
         SetFwdVelAngVelCreate(serPort, v, 0);
         pause(pauseTime);
-        position = updatePosition(serPort, position, new_orientation);
+        position = updatePosition(serPort, position, prev_orientation);
     end
     
     finalRad = 0;
