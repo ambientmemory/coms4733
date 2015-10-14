@@ -42,8 +42,7 @@ function finalRad = hw2_team_10(serPort)
         end
         
         %We did not encounter a wall and intend to m-line to exit
-        % TODO: this doesn't quite work!!!
-        rotate(serPort, -orientation, pauseTime);
+        Rotate(serPort, -orientation, pauseTime);
         new_orientation = 0; %updateOrientation(serPort, orientation);
         SetFwdVelAngVelCreate(serPort, v, 0);
         pause(pauseTime);
@@ -74,7 +73,7 @@ function [position, orientation] = ...
             moveStraight(serPort, -maxV, 0.3, false, pauseTime);
             position = updatePosition(serPort, position, orientation);
             
-            rotate(serPort, turnAngle, pauseTime);
+            Rotate(serPort, turnAngle, pauseTime);
             orientation = updateOrientation(serPort, orientation);
         end
         
@@ -107,7 +106,7 @@ function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
 end
 
 % Rotates the robot at approximately the angle specified
-function rotate(serPort, angleToTurn, pauseTime)
+function Rotate(serPort, angleToTurn, pauseTime)
     v = 0;
     w = sign(angleToTurn)*v2w(v);
     elapsedTime = 0;
