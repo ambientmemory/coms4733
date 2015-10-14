@@ -30,23 +30,24 @@ function finalRad = hw2_team_10(serPort)
     while norm(goalPosition - position) > goalPositionEps
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
                 BumpsWheelDropsSensorsRoomba(serPort);
-        
         Wall = WallSensorReadRoomba(serPort);
-        if Wall || BumpFront || BumpLeft || BumpRight && ...
-                norm(lastPosition - position) > goalPositionEps
+        
+        %If we encountered a wall
+        if Wall || BumpFront || BumpLeft || BumpRight %&& ...
+                %norm(lastPosition - position) > goalPositionEps
             [position, orientation] = ...
                 followWall(serPort, maxV, position, orientation, ...
                     pauseTime);
             lastPosition = position;
         end
         
+        %We did not encounter a wall and intend to m-line to exit
         % TODO: this doesn't quite work!!!
-        prev_orientation = orientation; 
-        rotate(serPort, -prev_orientation, pauseTime);
+        rotate(serPort, -orientation, pauseTime);
         new_orientation = 0; %updateOrientation(serPort, orientation);
         SetFwdVelAngVelCreate(serPort, v, 0);
         pause(pauseTime);
-        position = updatePosition(serPort, position, prev_orientation);
+        position = updatePosition(serPort, position, new_orientation);
     end
     
     finalRad = 0;
@@ -59,8 +60,8 @@ function [position, orientation] = ...
     turnAngle = pi/4;
     turnV = maxV/2;
     
+    %True while not on the m-line
     while abs(position(2)) >= mLineEps || hasNotLeft
-        
         % 1.2 creates buffer where position might oscillate in and out of
         % mLineEps range
         if(position(2) >= mLineEps * 1.2)
@@ -110,13 +111,11 @@ function rotate(serPort, angleToTurn, pauseTime)
     v = 0;
     w = sign(angleToTurn)*v2w(v);
     elapsedTime = 0;
-    
     SetFwdVelAngVelCreate(serPort, v, w);
     while abs(elapsedTime * w) < abs(angleToTurn)% && ~bumped
         pause(pauseTime);
         elapsedTime = elapsedTime + pauseTime;
     end
-    
     SetFwdVelAngVelCreate(serPort, 0, 0);
 end
 
