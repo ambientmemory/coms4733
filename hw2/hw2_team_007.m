@@ -55,7 +55,7 @@ function [position, orientation] = ...
         followWall(serPort, maxV, position, orientation, pauseTime)
     mLineEps = maxV * pauseTime;
     hasNotLeft = true;
-    turnAngle = pi/2;
+    turnAngle = pi/4;
     turnV = maxV/2;
     
     while abs(position(2)) >= mLineEps || hasNotLeft
@@ -84,7 +84,7 @@ function [position, orientation] = ...
         
         % position might get off if things happen wrongly or something? gah
         position = updatePosition(serPort, position, orientation);
-        orientation = updateOrientation(serPort, orientation)
+        orientation = updateOrientation(serPort, orientation);
     end
 end
 
@@ -104,6 +104,21 @@ function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
     end
 end
 
+% Rotates the robot at approximately the angle specified
+function rotate(serPort, angleToTurn, pauseTime)
+    v = 0;
+    w = sign(angleToTurn)*v2w(v);
+    elapsedTime = 0;
+    
+    SetFwdVelAngVelCreate(serPort, v, w);
+    while abs(elapsedTime * w) < abs(angleToTurn)% && ~bumped
+        pause(pauseTime);
+        elapsedTime = elapsedTime + pauseTime;
+    end
+    
+    SetFwdVelAngVelCreate(serPort, 0, 0);
+end
+
 % Calculates the change in position since the last call
 function position = updatePosition(serPort, position, orientation)
     distance = DistanceSensorRoomba(serPort);
@@ -111,6 +126,8 @@ function position = updatePosition(serPort, position, orientation)
     dy = distance * sin(orientation);
     position = position + [dx, dy];
 end
+
+
 
 function orientation = updateOrientation(serPort, orientation)
     orientation = mod(orientation + AngleSensorRoomba(serPort), 2*pi);
