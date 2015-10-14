@@ -34,17 +34,24 @@ function finalRad = hw2_team_10(serPort)
         
         %If we encountered a wall
         if Wall || BumpFront || BumpLeft || BumpRight %&& ...
-                %norm(lastPosition - position) > goalPositionEps
+             disp('Debug: Found a wall!');
             [position, orientation] = ...
                 followWall(serPort, maxV, position, orientation, ...
                     pauseTime);
+            disp('Debug: exited followWall');
             lastPosition = position;
+            disp('position = ');
+            disp(position); 
         end
-        
+        disp('Debug: outside wall-bumper if block');
+        disp('orientation is:');
+        disp(orientation);
         %We did not encounter a wall and intend to m-line to exit
         Rotate(serPort, -orientation, pauseTime);
         new_orientation = 0; %updateOrientation(serPort, orientation);
         SetFwdVelAngVelCreate(serPort, v, 0);
+        %Dropping Jett's wisdom all over here
+        updateOrientation(serPort, orientation)
         pause(pauseTime);
         position = updatePosition(serPort, position, new_orientation);
     end
