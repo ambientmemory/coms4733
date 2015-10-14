@@ -49,11 +49,13 @@ function finalRad = hw2_team_10(serPort)
         disp('position (outside wall-bumper block) is:');
         disp(position); 
         
-        new_orientation = 0;
         %We did not encounter a wall and intend to m-line to exit
-        % Rotate(serPort, orientation-orientation, pauseTime);
-        Rotate(serPort, orientation-new_orientation, pauseTime);
-        %new_orientation = 0; %updateOrientation(serPort, orientation);
+        Rotate(serPort, -orientation, pauseTime);
+        %TODO @Peels: Why can't we align this orientation witb the global
+        %axis? 
+        %Alternatively, how do we carry forward the orientation from before
+        % hitting the wall?
+        new_orientation = 0; %updateOrientation(serPort, orientation);
         SetFwdVelAngVelCreate(serPort, v, 0);
         %Dropping Jett's wisdom all over here
         pause(pauseTime);
