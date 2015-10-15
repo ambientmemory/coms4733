@@ -25,9 +25,8 @@ function finalRad = hw2_team_010(serPort)
     lastPosition = [-goalPositionEps, -goalPositionEps];
     AngleSensorRoomba(serPort);
     DistanceSensorRoomba(serPort);
-    beginWallFollowY = -1;
-    
-    SetFwdVelAngVelCreate(serPort, v, 0);
+    beginWallFollowX = -1;
+
     % Follows line until wall sensor is read
     while norm(goalPosition - position) > goalPositionEps
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
@@ -36,15 +35,15 @@ function finalRad = hw2_team_010(serPort)
         Wall = WallSensorReadRoomba(serPort);
         if Wall || BumpFront || BumpLeft || BumpRight && ...
                 norm(lastPosition - position) > goalPositionEps
-            beginWallFollowY = position(1);
+            beginWallFollowX = position(1);
             [position, orientation] = ...
                 followWall(serPort, maxV, position, orientation, ...
-                    pauseTime, beginWallFollowY);
+                    pauseTime, beginWallFollowX, goalPosition);
             lastPosition = position;
             orientation = rotate(serPort, orientation, ...
                 -orientation, pauseTime);
         end
-        if norm(beginWallFollowY - position(1)) < goalPositionEps
+        if norm(beginWallFollowX - position(1)) < goalPositionEps
             SetFwdVelAngVelCreate(serPort, 0, 0);
             break;
         end
@@ -59,7 +58,7 @@ function finalRad = hw2_team_010(serPort)
         end
         SetFwdVelAngVelCreate(serPort, v, w);
         pause(pauseTime);
-        position = updatePosition(serPort, position, orientation)
+        position = updatePosition(serPort, position, orientation);
         orientation = updateOrientation(serPort, orientation);
     end
     
@@ -68,13 +67,13 @@ function finalRad = hw2_team_010(serPort)
 end
 
 function [position, orientation] = ...
-        followWall(serPort, maxV, position, orientation, pauseTime, beginWallFollowY)
+        followWall(serPort, maxV, position, orientation, pauseTime, beginWallFollowX, goalPosition)
     mLineEps = maxV * pauseTime;
     hasNotLeft = true;
     turnAngle = pi/4;
     turnV = maxV/2;
 
-    while abs(position(2)) >= mLineEps || position(1) < (beginWallFollowY - 2*mLineEps) || hasNotLeft
+    while abs(position(2)) >= mLineEps || position(1) < (beginWallFollowX - 4*mLineEps) || position(1) > goalPosition(1) || hasNotLeft
 
         % 1.2 creates buffer where position might oscillate in and out of
         % mLineEps range
@@ -101,6 +100,7 @@ function [position, orientation] = ...
         position = updatePosition(serPort, position, orientation);
         orientation = updateOrientation(serPort, orientation);
     end
+end
 
     function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
     SetFwdVelAngVelCreate(serPort, v, 0);
