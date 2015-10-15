@@ -11,11 +11,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function finalRad = hw2_team_010(serPort)
+    
+    plot_orientation=[];
+    plot_position = []; 
 
     % set constants
     maxV = 0.5; % m/s
     turnV = maxV/2;
-    pauseTime = 0.05; % s
+    pauseTime = 0.05; 
     goalPosition = [4, 0];
     goalPositionEps = maxV * pauseTime * 5;
 
@@ -26,22 +29,28 @@ function finalRad = hw2_team_010(serPort)
     AngleSensorRoomba(serPort);
     DistanceSensorRoomba(serPort);
     beginWallFollowX = -1;
-
+    position
+    orientation
+    
     % Follows line until wall sensor is read
     while norm(goalPosition - position) > goalPositionEps
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
                 BumpsWheelDropsSensorsRoomba(serPort);
-
         Wall = WallSensorReadRoomba(serPort);
+        
         if Wall || BumpFront || BumpLeft || BumpRight && ...
                 norm(lastPosition - position) > goalPositionEps
             beginWallFollowX = position(1);
             [position, orientation] = ...
                 followWall(serPort, maxV, position, orientation, ...
                     pauseTime, beginWallFollowX, goalPosition);
-            lastPosition = position;
+                
+                position
+                orientation
+                
+            lastPosition = position
             orientation = rotate(serPort, orientation, ...
-                -orientation, pauseTime);
+                -orientation, pauseTime)
         end
         if norm(beginWallFollowX - position(1)) < goalPositionEps
             SetFwdVelAngVelCreate(serPort, 0, 0);
@@ -58,12 +67,14 @@ function finalRad = hw2_team_010(serPort)
         end
         SetFwdVelAngVelCreate(serPort, v, w);
         pause(pauseTime);
-        position = updatePosition(serPort, position, orientation);
-        orientation = updateOrientation(serPort, orientation);
+        position = updatePosition(serPort, position, orientation)
+        orientation = updateOrientation(serPort, orientation)
     end
     
     SetFwdVelAngVelCreate(serPort, 0, 0);
     finalRad = orientation;
+    position
+    orientation
 end
 
 function [position, orientation] = ...
@@ -87,9 +98,9 @@ function [position, orientation] = ...
             BumpsWheelDropsSensorsRoomba(serPort);
         if BumpFront || BumpLeft || BumpRight
             moveStraight(serPort, -maxV, 0.3, false, pauseTime);
-            position = updatePosition(serPort, position, orientation);
+            position = updatePosition(serPort, position, orientation)
             orientation = rotate(serPort, orientation, turnAngle, ...
-                pauseTime);
+                pauseTime)
         end
 
         if WallSensorReadRoomba(serPort)
@@ -99,8 +110,8 @@ function [position, orientation] = ...
         end
 
         % position might get off if things happen wrongly or something? gah
-        position = updatePosition(serPort, position, orientation);
-        orientation = updateOrientation(serPort, orientation);
+        position = updatePosition(serPort, position, orientation)
+        orientation = updateOrientation(serPort, orientation)
     end
 end
 
@@ -108,7 +119,6 @@ end
     SetFwdVelAngVelCreate(serPort, v, 0);
     timeMoved = 0;
     while timeMoved < timeToMove
-
         pause(pauseTime)
         timeMoved = timeMoved + 0.1;
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
@@ -125,13 +135,11 @@ function orientation = rotate(serPort, orientation, angleToTurn, pauseTime)
     v = 0;
     w = sign(angleToTurn)*v2w(v);
     startOrientation = orientation;
-    
     SetFwdVelAngVelCreate(serPort, v, w);
     while abs(orientation - startOrientation) < abs(angleToTurn)
         pause(pauseTime);
         orientation = orientation + AngleSensorRoomba(serPort);
     end
-    
     SetFwdVelAngVelCreate(serPort, 0, 0);
     orientation = normalizeAngle(orientation);
 end
@@ -159,6 +167,5 @@ function w = v2w(v)
     % robot facts
     maxWheelV = 0.5; % m/s
     robotRadius = 0.2; % m
-
     w = (maxWheelV - v)/robotRadius;
 end
