@@ -10,7 +10,7 @@
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function finalRad = hw2_team_010(serPort)
+function finalRad = hw2_team_007(serPort)
 
     % set constants
     maxV = 0.5; % m/s
