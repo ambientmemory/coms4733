@@ -3,7 +3,7 @@
 %
 % Homework 2
 %
-% Team number: 007 
+% Team number: 10 
 % Team leader: Jett Andersen (jca2136)
 % Team members: Jett Andersen (jca2136), Piyali Mukherjee (pm2678),
 %               Tia Zhao (tz2191)
@@ -26,7 +26,8 @@ function finalRad = hw2_team_007(serPort)
     AngleSensorRoomba(serPort);
     DistanceSensorRoomba(serPort);
     beginWallFollowY = -1;
-
+    
+    SetFwdVelAngVelCreate(serPort, v, 0);
     % Follows line until wall sensor is read
     while norm(goalPosition - position) > goalPositionEps
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
@@ -61,9 +62,10 @@ function finalRad = hw2_team_007(serPort)
         position = updatePosition(serPort, position, orientation)
         orientation = updateOrientation(serPort, orientation);
     end
-
-    finalRad = 0;
-    end
+    
+    SetFwdVelAngVelCreate(serPort, 0, 0);
+    finalRad = orientation;
+end
 
 function [position, orientation] = ...
         followWall(serPort, maxV, position, orientation, pauseTime, beginWallFollowY)
@@ -85,7 +87,6 @@ function [position, orientation] = ...
         if BumpFront || BumpLeft || BumpRight
             moveStraight(serPort, -maxV, 0.3, false, pauseTime);
             position = updatePosition(serPort, position, orientation);
-
             orientation = rotate(serPort, orientation, turnAngle, ...
                 pauseTime);
         end
@@ -99,7 +100,6 @@ function [position, orientation] = ...
         % position might get off if things happen wrongly or something? gah
         position = updatePosition(serPort, position, orientation);
         orientation = updateOrientation(serPort, orientation);
-    end
     end
 
     function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
