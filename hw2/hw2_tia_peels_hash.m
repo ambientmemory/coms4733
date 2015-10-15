@@ -1,112 +1,98 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % COMS W4733 Computational Aspects of Robotics 2015
 %
-% Homework 1
+% Homework 2
 %
-% Team number: 007 
+% Team number: 010
 % Team leader: Jett Andersen (jca2136)
 % Team members: Jett Andersen (jca2136), Piyali Mukherjee (pm2678),
 %               Tia Zhao (tz2191)
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function finalRad = hw2_team_007(serPort)
+function finalRad = hw2_team_010(serPort)
 
     % set constants
     maxV = 0.5; % m/s
-    turnV = maxV/2;
     pauseTime = 0.05; % s
     goalPosition = [4, 0];
-    goalPositionEps = maxV * pauseTime * 5;
-
+    goalPositionEps = maxV * pauseTime * 20; %This value starts with 0.500
+    
     % loop values
+    v = maxV;
     orientation = 0;
     position = [0, 0];
     lastPosition = [-goalPositionEps, -goalPositionEps];
     AngleSensorRoomba(serPort);
     DistanceSensorRoomba(serPort);
-    beginWallFollowY = -1;
-
+    SetFwdVelAngVelCreate(serPort, v, 0);
+    
     % Follows line until wall sensor is read
     while norm(goalPosition - position) > goalPositionEps
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
                 BumpsWheelDropsSensorsRoomba(serPort);
-
+       
         Wall = WallSensorReadRoomba(serPort);
         if Wall || BumpFront || BumpLeft || BumpRight && ...
-                norm(lastPosition - position) > goalPositionEps
-            beginWallFollowY = position(1);
+                norm(lastPosition - position) >= goalPositionEps
             [position, orientation] = ...
                 followWall(serPort, maxV, position, orientation, ...
-                    pauseTime, beginWallFollowY);
+                    pauseTime);
             lastPosition = position;
-            orientation = rotate(serPort, orientation, ...
-                -orientation, pauseTime);
         end
-        if norm(beginWallFollowY - position(1)) < goalPositionEps
-            SetFwdVelAngVelCreate(serPort, 0, 0);
-            break;
-        end
-        v = maxV;
-        w = 0;
-        if(orientation  > 0)
-            v = turnV;
-            w = -v2w(v);
-        elseif(orientation < 0)
-            v = turnV;
-            w = v2w(v);
-        end
-        SetFwdVelAngVelCreate(serPort, v, w);
+        
+        % TODO: this doesn't quite work!!!
+        rotate(serPort, -orientation, pauseTime);
+        orientation = 0; 
+        updateOrientation(serPort, orientation);
+        SetFwdVelAngVelCreate(serPort, v, 0);
         pause(pauseTime);
-        position = updatePosition(serPort, position, orientation)
-        orientation = updateOrientation(serPort, orientation);
+        position = updatePosition(serPort, position, orientation);
     end
-
+    
     finalRad = 0;
-    end
+end
 
 function [position, orientation] = ...
-        followWall(serPort, maxV, position, orientation, pauseTime, beginWallFollowY)
+        followWall(serPort, maxV, position, orientation, pauseTime)
     mLineEps = maxV * pauseTime;
     hasNotLeft = true;
-    turnAngle = pi/4;
+    turnAngle = pi/2;
     turnV = maxV/2;
-
-    while abs(position(2)) >= mLineEps || position(1) < (beginWallFollowY - 2*mLineEps) || hasNotLeft
-
+    
+    while abs(position(2)) >= mLineEps || hasNotLeft
         % 1.2 creates buffer where position might oscillate in and out of
         % mLineEps range
         if(position(2) >= mLineEps * 1.2)
             hasNotLeft = false;
         end
-
+        
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
             BumpsWheelDropsSensorsRoomba(serPort);
         if BumpFront || BumpLeft || BumpRight
             moveStraight(serPort, -maxV, 0.3, false, pauseTime);
             position = updatePosition(serPort, position, orientation);
-
-            orientation = rotate(serPort, orientation, turnAngle, ...
-                pauseTime);
+            
+            rotate(serPort, turnAngle, pauseTime);
+            orientation = updateOrientation(serPort, orientation);
         end
-
+        
         if WallSensorReadRoomba(serPort)
             SetFwdVelAngVelCreate(serPort, turnV, v2w(turnV));
         else
             SetFwdVelAngVelCreate(serPort, turnV, -v2w(turnV));
         end
-
+        
         % position might get off if things happen wrongly or something? gah
         position = updatePosition(serPort, position, orientation);
         orientation = updateOrientation(serPort, orientation);
     end
-    end
+end
 
-    function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
+function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
     SetFwdVelAngVelCreate(serPort, v, 0);
     timeMoved = 0;
     while timeMoved < timeToMove
-
         pause(pauseTime)
         timeMoved = timeMoved + 0.1;
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
@@ -117,23 +103,6 @@ function [position, orientation] = ...
         end
     end
 end
-
-% Rotates the robot at approximately the angle specified
-function orientation = rotate(serPort, orientation, angleToTurn, pauseTime)
-    v = 0;
-    w = sign(angleToTurn)*v2w(v);
-    startOrientation = orientation;
-    
-    SetFwdVelAngVelCreate(serPort, v, w);
-    while abs(orientation - startOrientation) < abs(angleToTurn)
-        pause(pauseTime);
-        orientation = orientation + AngleSensorRoomba(serPort);
-    end
-    
-    SetFwdVelAngVelCreate(serPort, 0, 0);
-    orientation = normalizeAngle(orientation);
-end
-
 % Calculates the change in position since the last call
 function position = updatePosition(serPort, position, orientation)
     distance = DistanceSensorRoomba(serPort);
@@ -143,20 +112,12 @@ function position = updatePosition(serPort, position, orientation)
 end
 
 function orientation = updateOrientation(serPort, orientation)
-    orientation = normalizeAngle(orientation + AngleSensorRoomba(serPort));
-end
-
-function angle = normalizeAngle(angle)
-    angle = mod(angle, 2*pi);
-    if(angle > pi)
-        angle = angle - 2*pi;
-    end
+    orientation = mod(orientation + AngleSensorRoomba(serPort), 2*pi);
 end
 
 function w = v2w(v)
     % robot facts
     maxWheelV = 0.5; % m/s
     robotRadius = 0.2; % m
-
     w = (maxWheelV - v)/robotRadius;
 end
