@@ -51,10 +51,10 @@ function finalRad = hw2_team_010(serPort)
         w = 0;
         if(orientation  > 0)
             v = turnV;
-            w = -v2w(v);
+            w = -v2w(v) * 0.8;
         elseif(orientation < 0)
             v = turnV;
-            w = v2w(v);
+            w = v2w(v) * 0.8;
         end
         SetFwdVelAngVelCreate(serPort, v, w);
         pause(pauseTime);
@@ -79,14 +79,14 @@ function [position, orientation] = ...
 
         % 1.2 creates buffer where position might oscillate in and out of
         % mLineEps range
-        if(position(2) >= mLineEps * 1.2)
+        if(position(2) >= mLineEps * 4)
             hasNotLeft = false;
         end
 
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
             BumpsWheelDropsSensorsRoomba(serPort);
         if BumpFront || BumpLeft || BumpRight
-            moveStraight(serPort, -maxV, 0.3, false, pauseTime);
+            moveStraight(serPort, -maxV, 0.1, false, pauseTime);
             position = updatePosition(serPort, position, orientation);
             orientation = rotate(serPort, orientation, turnAngle, ...
                 pauseTime);
@@ -104,13 +104,13 @@ function [position, orientation] = ...
     end
 end
 
-    function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
+function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
     SetFwdVelAngVelCreate(serPort, v, 0);
     timeMoved = 0;
     while timeMoved < timeToMove
 
         pause(pauseTime)
-        timeMoved = timeMoved + 0.1;
+        timeMoved = timeMoved + pauseTime;
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
             BumpsWheelDropsSensorsRoomba(serPort);
         bumped = BumpRight || BumpLeft || BumpFront;

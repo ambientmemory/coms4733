@@ -102,57 +102,6 @@ function [position, orientation] = ...
     end
 end
 
-    function moveStraight(serPort, v, timeToMove, stopOffWall, pauseTime)
-    SetFwdVelAngVelCreate(serPort, v, 0);
-    timeMoved = 0;
-    while timeMoved < timeToMove
-
-        pause(pauseTime)
-        timeMoved = timeMoved + 0.1;
-        [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
-            BumpsWheelDropsSensorsRoomba(serPort);
-        bumped = BumpRight || BumpLeft || BumpFront;
-        if bumped || (~WallSensorReadRoomba(serPort) && stopOffWall)
-            break;
-        end
-    end
-end
-
-% Rotates the robot at approximately the angle specified
-function orientation = rotate(serPort, orientation, angleToTurn, pauseTime)
-    v = 0;
-    w = sign(angleToTurn)*v2w(v);
-    startOrientation = orientation;
-    
-    SetFwdVelAngVelCreate(serPort, v, w);
-    while abs(orientation - startOrientation) < abs(angleToTurn)
-        pause(pauseTime);
-        orientation = orientation + AngleSensorRoomba(serPort);
-    end
-    
-    SetFwdVelAngVelCreate(serPort, 0, 0);
-    orientation = normalizeAngle(orientation);
-end
-
-% Calculates the change in position since the last call
-function position = updatePosition(serPort, position, orientation)
-    distance = DistanceSensorRoomba(serPort);
-    dx = distance * cos(orientation);
-    dy = distance * sin(orientation);
-    position = position + [dx, dy];
-end
-
-function orientation = updateOrientation(serPort, orientation)
-    orientation = normalizeAngle(orientation + AngleSensorRoomba(serPort));
-end
-
-function angle = normalizeAngle(angle)
-    angle = mod(angle, 2*pi);
-    if(angle > pi)
-        angle = angle - 2*pi;
-    end
-end
-
 function w = v2w(v)
     % robot facts
     maxWheelV = 0.5; % m/s
