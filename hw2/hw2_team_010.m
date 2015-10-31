@@ -10,7 +10,10 @@
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 function finalRad = hw2_team_010(serPort)
+    save('plot_position.mat');
+    save('plot_orientation.mat');
     
     plot_orientation=[];
     plot_position = []; 
@@ -29,8 +32,8 @@ function finalRad = hw2_team_010(serPort)
     AngleSensorRoomba(serPort);
     DistanceSensorRoomba(serPort);
     beginWallFollowX = -1;
-    position
-    orientation
+    plot_position(end+1) = position; 
+    plot_orientation(end+1) = orientation;
     
     % Follows line until wall sensor is read
     while norm(goalPosition - position) > goalPositionEps
@@ -45,8 +48,8 @@ function finalRad = hw2_team_010(serPort)
                 followWall(serPort, maxV, position, orientation, ...
                     pauseTime, beginWallFollowX, goalPosition);
                 
-                position
-                orientation
+                plot_position(end+1) = position; 
+                plot_orientation(end+1) = orientation;
                 
             lastPosition = position
             orientation = rotate(serPort, orientation, ...
@@ -75,6 +78,10 @@ function finalRad = hw2_team_010(serPort)
     finalRad = orientation;
     position
     orientation
+    
+    save('plot_position.mat','-append', plot_position);
+    save('plot_orientation.mat','-append', plot_orientation);
+    
 end
 
 function [position, orientation] = ...
