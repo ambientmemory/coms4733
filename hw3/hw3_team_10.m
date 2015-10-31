@@ -13,13 +13,15 @@
 function hw3_team_10(serPort)
     cellSize = 1; % meters
     grid = ones(10/cellSize);
-    v = 0.45;
+    v = 0.5;
     
+    AngleSensorRoomba(serPort);
+    DistanceSensorRoomba(serPort);
     pauseTime = 0.1; % seconds;
-    maxTimeBetweenUpdates = 60; % seconds
     
+    maxTimeBetweenUpdates = 60; % seconds
     position = [0, 0];
-    orientation = 0;
+    orientation = 0; tic
     lastUpdateTime = toc;
     
     while toc - lastUpdateTime < maxTimeBetweenUpdates
@@ -52,7 +54,7 @@ function [position, grid] = moveStraight(serPort, v, grid, position, ...
             || timeToMove < 0 && ~bumped ...
             && position(1) < 5 && position(1) > -5 ...
             && position(2) < 5 && position(2) > -5
-        
+    
         pause(pauseTime)
         
         position = updatePosition(serPort, position, orientation);
@@ -61,8 +63,14 @@ function [position, grid] = moveStraight(serPort, v, grid, position, ...
         
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
             BumpsWheelDropsSensorsRoomba(serPort);
-        bumped = BumpRight || BumpLeft || BumpFront;
-    end
+        if ~(isempty(BumpRight)) bumped = true;
+        end
+        if ~(isempty(BumpRight)) bumped = true;
+        end
+        if ~(isempty(BumpLeft)) bumped = true;   
+        end
+       % bumped = BumpRight || BumpLeft || BumpFront;
+        end
 end
 
 function cell = positionToCell(position, cellSize, gridSize)
@@ -112,3 +120,4 @@ function w = v2w(v)
 
     w = (maxWheelV - v)/robotRadius * 0.9;
 end
+
