@@ -19,9 +19,10 @@ function hw3_team_10(serPort)
     DistanceSensorRoomba(serPort);
     pauseTime = 0.1; % seconds;
     
-    maxTimeBetweenUpdates = 60; % seconds
+    maxTimeBetweenUpdates = 30; % seconds
     position = [0, 0];
-    orientation = 0; tic
+    orientation = 0; 
+    tic;
     lastUpdateTime = toc;
     
     while toc - lastUpdateTime < maxTimeBetweenUpdates
@@ -63,14 +64,8 @@ function [position, grid] = moveStraight(serPort, v, grid, position, ...
         
         [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
             BumpsWheelDropsSensorsRoomba(serPort);
-        if ~(isempty(BumpRight)) bumped = true;
-        end
-        if ~(isempty(BumpRight)) bumped = true;
-        end
-        if ~(isempty(BumpLeft)) bumped = true;   
-        end
-       % bumped = BumpRight || BumpLeft || BumpFront;
-        end
+            bumped = BumpRight || BumpLeft || BumpFront;
+    end
 end
 
 function cell = positionToCell(position, cellSize, gridSize)
