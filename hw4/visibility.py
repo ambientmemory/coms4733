@@ -186,4 +186,4 @@ def createGraph():
                     isVisible(v1, v2, obstacles, world):
                 v1.addAdjacent(v2)
 
-    return graph
+    return graph, world, obstacles, grownObstacles
