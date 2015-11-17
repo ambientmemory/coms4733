@@ -3,25 +3,45 @@ import math
 class Point:
     x = 0.0
     y = 0.0
-    def __init__(self, X, Y):
-        self.x = X
-        self.y = Y
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
-    def plus(self, P):
-        return Point(P.x + self.x, P.y + self.y)
+    def plus(self, p):
+        return Point(p.x + self.x, p.y + self.y)
 
     def __repr__(self):
-        return '(' + str(self.x) + ',' + str(self.y) + ')'
+        return 'Point(' + str(self.x) + ',' + str(self.y) + ')'
 
 def makePoint(xy):
     return Point(xy[0], xy[1])
 
 class Vertex:
-    adjacenct = []
+    adjacent = []
     p = Point(0, 0)
-    def __init__(self, P):
-        adjacent = []
-        p = P
+    index = 0
+
+    def __init__(self, p, index):
+        self.adjacent = []
+        self.p = p
+        self.index = index
+
+    def __repr__(self):
+        return str(self.index) + ': ' + self.p.__repr__() + ' - ' \
+                + [v.index for v in self.adjacent].__repr__()
+
+class Graph:
+    vertices = []
+    maxIndex = -1
+    def addVertex(self, vertex):
+        if vertex.index <= self.maxIndex:
+            print('Error: bad vertex index (' + str(vertex.index) + ')')
+        else:
+            self.vertices.append(vertex)
+            self.maxIndex = vertex.index
+
+    def __repr__(self):
+        return self.vertices.__repr__()
 
 def splitWhen(pred, iterable):
     l1 = []
@@ -37,12 +57,12 @@ def splitWhen(pred, iterable):
     return l1, l2
 
 def loadPolygons():
-    f = open('hw4_world_and_obstacles_convex.txt', 'r')
-    obstacleStrings = f.read().split('\n')[2:]
+    f1 = open('hw4_world_and_obstacles_convex.txt', 'r')
+    obstacleStrings = f1.read().split('\n')[2:]
 
     world, obstacleStrings = splitWhen(lambda s: not ' ' in s, obstacleStrings)
     
-    toPoint = lambda s: makePoint(list(map(float, s.split(' ')[:-1])))
+    toPoint = lambda s: makePoint(list(map(float, s.strip().split(' '))))
     world = list(map(toPoint, world))
     
     obstacles = []
@@ -51,7 +71,14 @@ def loadPolygons():
         if len(obstacle) > 0:
             obstacles = obstacles + [list(map(toPoint, obstacle))]
 
-    return obstacles, world
+    f2 = open('hw4_start_goal.txt', 'r')
+
+    graph = Graph()
+    vertices = [ Vertex(toPoint(s), i) for i, s in enumerate(f2.read().split('\n')[:-1]) ]
+    for vertex in vertices:
+        graph.addVertex(vertex)
+
+    return obstacles, world, graph
 
 def convexHull(points):
     p = points[0]
@@ -91,10 +118,8 @@ def growPolygons(polygons):
 
     return grownPolygons
 
-mypolygons = [[Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1)]]
+def createGraph():
+    obstacles, world, graph = loadPolygons()
+    grownObstacles = growPolygons(obstacles)
 
-def doIt():
-    return growPolygons(loadPolygons()[0])
-
-def createGraph(vertices):
-    return []
+    print(graph)
