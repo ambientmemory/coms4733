@@ -10,6 +10,12 @@ class Point:
     def plus(self, p):
         return Point(p.x + self.x, p.y + self.y)
 
+    def shift(self, p, scale):
+        dx = self.x - p.x
+        dy = self.y - p.y
+        self.x = self.x + dx * scale
+        self.y = self.y + dy * scale
+
     def __repr__(self):
         return 'Point(' + str(self.x) + ',' + str(self.y) + ')'
 
@@ -19,16 +25,23 @@ def makePoint(xy):
 class Vertex:
     adjacent = []
     p = Point(0, 0)
-    index = 0
+    index = -1
+    obstacle = -1
 
-    def __init__(self, p, index):
+    def __init__(self, p, index, obstacle):
         self.adjacent = []
         self.p = p
         self.index = index
+        self.obstacle = obstacle
 
     def __repr__(self):
         return str(self.index) + ': ' + self.p.__repr__() + ' - ' \
                 + [v.index for v in self.adjacent].__repr__()
+
+    def addAdjacent(self, vertex):
+        self.adjacent.append(vertex)
+        vertex.adjacent.append(self)
+
 
 class Graph:
     vertices = []
@@ -74,11 +87,19 @@ def loadPolygons():
     f2 = open('hw4_start_goal.txt', 'r')
 
     graph = Graph()
-    vertices = [ Vertex(toPoint(s), i) for i, s in enumerate(f2.read().split('\n')[:-1]) ]
+    vertices = [ Vertex(toPoint(s), i, -1) for i, s in enumerate(f2.read().split('\n')[:-1]) ]
     for vertex in vertices:
         graph.addVertex(vertex)
 
     return obstacles, world, graph
+
+def orientation(p1, p2, p3):
+    o = (p2.x - p1.x)*(p3.y - p1.y) - (p2.y - p1.y)*(p3.x - p1.x)
+    if o > 0:
+        return 1
+    if o < 0:
+        return -1
+    return 0
 
 def convexHull(points):
     p = points[0]
@@ -98,7 +119,7 @@ def convexHull(points):
         p2 = orderedPoints[i]
         p3 = orderedPoints[(i + 1) % numPoints]
         
-        if (p2.x - p1.x)*(p3.y - p1.y) - (p2.y - p1.y)*(p3.x - p1.x) <= 0:
+        if orientation(p1, p2, p3) <= 0:
             isInHull[i] = False
 
     return [point for i, point in enumerate(orderedPoints) if isInHull[i]]
@@ -118,8 +139,51 @@ def growPolygons(polygons):
 
     return grownPolygons
 
+def intersects(p1, p2, p3, p4):
+    return orientation(p1, p2, p3) != orientation(p1, p2, p4) and \
+            orientation(p3, p4, p1) != orientation(p3, p4, p2)
+
+def isVisible(v1, v2, obstacles, world):
+    for i, obstacle in enumerate(obstacles):
+        p1 = Point(v1.p.x, v1.p.y)
+        p2 = Point(v2.p.x, v2.p.y)
+
+        # move away in case v1 is inside obstacle2 or vice versa
+        if v1.obstacle == i:
+            p2.shift(p1, 100)
+        elif v2.obstacle == i:
+            p1.shift(p2, 100)
+
+        for j in range(len(obstacle)):
+            if intersects(p1, p2,
+                    obstacle[j], obstacle[(j + 1) % len(obstacle)]):
+                return False
+
+    return True
+
 def createGraph():
     obstacles, world, graph = loadPolygons()
     grownObstacles = growPolygons(obstacles)
+    index = graph.maxIndex + 1
 
-    print(graph)
+    for obsInd, obstacle in enumerate(grownObstacles):
+        vertices = []
+        for point in obstacle:
+            vertex = Vertex(point, index, obsInd)
+            index = index + 1
+            vertices.append(vertex)
+            graph.addVertex(vertex)
+
+        for i in range(len(vertices)):
+            vertices[i].addAdjacent(vertices[(i + 1) % len(vertices)])
+
+    size = len(graph.vertices)
+    for v1i in range(size):
+        v1 = graph.vertices[v1i]
+        for v2i in range(v1i + 1, size):
+            v2 = graph.vertices[v2i]
+            if v1.obstacle != v2.obstacle and \
+                    isVisible(v1, v2, obstacles, world):
+                v1.addAdjacent(v2)
+
+    return graph
