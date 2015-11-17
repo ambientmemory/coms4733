@@ -144,7 +144,7 @@ def intersects(p1, p2, p3, p4):
             orientation(p3, p4, p1) != orientation(p3, p4, p2)
 
 def isVisible(v1, v2, obstacles, world):
-    for i, obstacle in enumerate(obstacles):
+    for i, obstacle in enumerate(obstacles + [world]):
         p1 = Point(v1.p.x, v1.p.y)
         p2 = Point(v2.p.x, v2.p.y)
 
