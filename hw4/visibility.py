@@ -42,6 +42,16 @@ class Vertex:
         self.adjacent.append(vertex)
         vertex.adjacent.append(self)
 
+    def isAdjacent(self, vertex):
+        selfAdjInds = list(map(lambda v: v.index, self.adjacent))
+        return vertex.index in selfAdjInds
+
+    def removeAdjacent(self, vertex):
+        selfAdjInds = list(map(lambda v: v.index, self.adjacent))
+        vertexAdjInds = list(map(lambda v: v.index, vertex.adjacent))
+        if vertex.index in selfAdjInds:
+            del self.adjacent[selfAdjInds.index(vertex.index)]
+            del vertex.adjacent[vertexAdjInds.index(self.index)]
 
 class Graph:
     vertices = []
@@ -101,21 +111,25 @@ def orientation(p1, p2, p3):
         return -1
     return 0
 
+def pointOrderKey(p, q):
+    angle = (math.atan2(q.y - p.y, q.x - p.x)) % (2*math.pi)
+    return (angle, (-1 if angle > math.pi/4 else 1) *
+            ((p.x - q.x)**2 + (p.y - q.y)**2)**0.5)
+
 def convexHull(points):
     p = points[0]
     for point in points:
-        if p.y < point.y or p.y == point.y and p.x < point.x:
+        if point.y < p.y or (point.y == p.y and point.x < p.x):
             p = point
 
-    eps = 0.00000000001
-    orderedPoints = sorted(points,
-            key=lambda q: (math.atan2(q.y - p.y, q.x - p.x)) % (2*math.pi))
+    orderedPoints = sorted(points, key=lambda q: pointOrderKey(p, q))
+
 
     numPoints = len(orderedPoints)
     isInHull = [True] * numPoints
 
     for i in range(1, numPoints):
-        p1 = orderedPoints[i - 1]
+        p1 = orderedPoints[(i - 1) % numPoints]
         p2 = orderedPoints[i]
         p3 = orderedPoints[(i + 1) % numPoints]
         
@@ -141,17 +155,23 @@ def growPolygons(polygons):
 
 def intersects(p1, p2, p3, p4):
     return orientation(p1, p2, p3) != orientation(p1, p2, p4) and \
-            orientation(p3, p4, p1) != orientation(p3, p4, p2)
+            orientation(p3, p4, p1) != orientation(p3, p4, p2) or \
+            p1 == p3 or p1 == p4 or p2 == p3 or p2 == p4
 
 def isVisible(v1, v2, obstacles, world):
     for i, obstacle in enumerate(obstacles + [world]):
+        if v1.obstacle == v2.obstacle and v1.obstacle == i:
+            break
+
         p1 = Point(v1.p.x, v1.p.y)
         p2 = Point(v2.p.x, v2.p.y)
 
         # move away in case v1 is inside obstacle2 or vice versa
         if v1.obstacle == i:
+            p1.shift(p2, -0.01)
             p2.shift(p1, 100)
         elif v2.obstacle == i:
+            p2.shift(p1, -0.01)
             p1.shift(p2, 100)
 
         for j in range(len(obstacle)):
@@ -163,6 +183,7 @@ def isVisible(v1, v2, obstacles, world):
 
 def createGraph():
     obstacles, world, graph = loadPolygons()
+    start_goal = list(graph.vertices)
     grownObstacles = growPolygons(obstacles)
     index = graph.maxIndex + 1
 
@@ -182,8 +203,10 @@ def createGraph():
         v1 = graph.vertices[v1i]
         for v2i in range(v1i + 1, size):
             v2 = graph.vertices[v2i]
-            if v1.obstacle != v2.obstacle and \
-                    isVisible(v1, v2, obstacles, world):
-                v1.addAdjacent(v2)
+            if isVisible(v1, v2, grownObstacles, world):
+                if v1.obstacle != v2.obstacle:
+                    v1.addAdjacent(v2)
+            elif v1.obstacle == v2.obstacle:
+                v1.removeAdjacent(v2)
 
-    return graph, world, obstacles, grownObstacles
+    return graph, world, obstacles, grownObstacles, start_goal
