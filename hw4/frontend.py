@@ -34,8 +34,8 @@ class Visual(Frame):
             elif len(current_entities) == 1:
                 vertices_current_obst=int(current_entities[0])
             else:
-                points.append(float(current_entities[0])*10)
-                points.append(float(current_entities[1])*10)
+                points.append((float(current_entities[1])*25)+25)
+                points.append((float(current_entities[0])*25)+25)
             current_line = obstacle_filename.readline()
 
             if line_counter == 18:
@@ -46,7 +46,7 @@ class Visual(Frame):
         #initialize coordinates for polygon vertices
         #points = [50,25, 50, 425]
         #render polygons
-        canvas.create_polygon(points, outline='black', fill='grey', width=0.5)
+        canvas.create_polygon(points, outline='black', fill='white', width=0.5)
 
         canvas.pack(fill=BOTH, expand=1)
 
@@ -56,13 +56,6 @@ def main():
     visualizer = Visual(gui_tk)
     gui_tk.geometry("1000x600+300+300")
     gui_tk.mainloop()
-
-"""def obstacle(filename):
-    no_of_vertices = 0
-    coords_of_vertices = []
-
-    def __init___(self):
-        self."""
 
 if __name__ == '__main__':
     main()
