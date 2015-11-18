@@ -4,6 +4,14 @@ import tkinter
 from tkinter import *
 
 class Visual(Frame):
+    global tr_x
+    tr_x = -4.0
+    global scale_x
+    scale_x = -60.0
+    global tr_y
+    tr_y = -4.0
+    global scale_y
+    scale_y = -60.0
 
     def __init__(self,parent):
         #initialize frame
@@ -22,32 +30,22 @@ class Visual(Frame):
 
     def drawer(self,canvas):
         obstacle_filename = open('hw4_world_and_obstacles_convex.txt')
-        line_counter = 0
-        total_obst = 0
-        points=[]
-        current_line = obstacle_filename.readline()
-        while current_line:
-            line_counter = line_counter+1
-            current_entities = current_line.split()
-            if len(current_entities) == 1 and line_counter == 1:
-                total_obst = int(current_entities[0])
-            elif len(current_entities) == 1:
-                vertices_current_obst=int(current_entities[0])
-            else:
-                points.append((float(current_entities[1])*25)+25)
-                points.append((float(current_entities[0])*25)+25)
-            current_line = obstacle_filename.readline()
+        list_of_objects = []        #This will be a list of lists, each element represents an object, each object in turn is a list of points
+        # We first read the count of objects
+        count_of_objects = int(obstacle_filename.readline().strip()) # read first line
+        for i in range(count_of_objects):
+            count_of_edges = int(obstacle_filename.readline().strip()) # read first line of the object description
+            list_of_points = []                                                        # The parameters to create_polygon are x0,y0,x1,y1...
+            for j in range(count_of_edges):
+                line = obstacle_filename.readline()
+                point_data = line.split()
+                list_of_points.append(scale_x*(tr_x - float(point_data[1])))
+                list_of_points.append(scale_y*(tr_y - float(point_data[0])))
+            list_of_objects.append(list_of_points)              # This will append the list of points of the current object to the list of objects
 
-            if line_counter == 18:
-                break
-        #endwhile for file reading
-
-        # TODO: Should be inside a loop
-        #initialize coordinates for polygon vertices
-        #points = [50,25, 50, 425]
-        #render polygons
-        canvas.create_polygon(points, outline='black', fill='white', width=0.5)
-
+        canvas.create_polygon(list_of_objects[0], outline='black', fill='white', width=3.0)
+        for i in range(1,count_of_objects):
+            canvas.create_polygon(list_of_objects[i], outline='blue', fill='white', width=0.5)
         canvas.pack(fill=BOTH, expand=1)
 
 
