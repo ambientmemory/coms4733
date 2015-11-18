@@ -1,7 +1,6 @@
-__author__ = 'Piyali'
-
-import tkinter
 from tkinter import *
+from dijkstra import *
+import itertools as it
 
 class Visual(Frame):
     global tr_x
@@ -28,37 +27,23 @@ class Visual(Frame):
         canvas = Canvas(self, bg="white")
         self.drawer(canvas)
 
-    def drawer(self,canvas):
-        obstacle_filename = open('hw4_world_and_obstacles_convex.txt')
-        list_of_objects = []
-        #This will be a list of lists, each element represents an object, each object in turn is a list of points
+    def drawer(self, canvas):
+        graph, world, obstacles, grownObstacles, start_goal = createGraph()
+#        path = dijkstra(graph.vertices, start_goal[0], start_goal[1])
 
-        # We first read the count of objects
-        count_of_objects = int(obstacle_filename.readline().strip()) # read first line
+        scale = lambda p: [scale_x*(tr_x - p.x), scale_y*(tr_y - p.y)]
+        toCanvasPoly = lambda os: list(it.chain(*map(scale, os)))
+        canvas.create_polygon(toCanvasPoly(world), outline='blue', fill='white', width=3.0)
 
-        for i in range(count_of_objects):
-            count_of_edges = int(obstacle_filename.readline().strip())
-            # read first line of the object description
+        for obstacle in obstacles:
+            canvas.create_polygon(toCanvasPoly(obstacle), outline='black', fill='white', width=3.0)
 
-            list_of_points = []
-            # The parameters to create_polygon are x0,y0,x1,y1...
+        for obstacle in grownObstacles:
+            canvas.create_polygon(toCanvasPoly(obstacle), outline='yellow', fill='white', width=3.0)
 
-            for j in range(count_of_edges):
-                line = obstacle_filename.readline()
-                point_data = line.split()
-                list_of_points.append(scale_x*(tr_x - float(point_data[1])))
-                list_of_points.append(scale_y*(tr_y - float(point_data[0])))
-            #endfor
-
-            list_of_objects.append(list_of_points)
-            # This will append the list of points of the current object to the list of objects
-
-        # renders outside map
-        canvas.create_polygon(list_of_objects[0], outline='black', fill='white', width=3.0)
-
-        #renders inner objects
-        for i in range(1,count_of_objects):
-            canvas.create_polygon(list_of_objects[i], outline='blue', fill='white', width=0.5)
+        for v1 in graph.vertices:
+            for v2 in v1.adjacent:
+                canvas.create_polygon(toCanvasPoly([v1.p, v2.p]), outline='red', fill='white', width=1.0)
 
         canvas.pack(fill=BOTH, expand=1)
 
