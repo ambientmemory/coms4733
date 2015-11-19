@@ -209,7 +209,7 @@ def growPolygons(polygons):
     grows the polygons by the size of the roomba
     '''
 
-    createDiam = 0.35
+    createDiam = 0.41
     grownPolygons = []
 
     for polygon in polygons:
