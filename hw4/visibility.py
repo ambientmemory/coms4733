@@ -1,16 +1,30 @@
+'''
+Homework 4
+Team 10
+Jett Andersen, Tia Zhao, Piyali Mukherjee
+'''
+
 import math
 
 class Point:
+
+    # coordinates
     x = 0.0
     y = 0.0
+
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
     def plus(self, p):
+        ''' returns a point that is the sum of self and p '''
         return Point(p.x + self.x, p.y + self.y)
 
     def shift(self, p, scale):
+        '''
+        shifts self in the direction self - p by the distance between
+        p and self multiplied by scale
+        '''
         dx = self.x - p.x
         dy = self.y - p.y
         self.x = self.x + dx * scale
@@ -19,14 +33,19 @@ class Point:
     def __repr__(self):
         return 'Point(' + str(self.x) + ',' + str(self.y) + ')'
 
-def makePoint(xy):
-    return Point(xy[0], xy[1])
-
 class Vertex:
+
+    # list of adjacent vertices
     adjacent = []
+    
+    # associated point
     p = Point(0, 0)
-    index = -1
+
+    # associated obstascle
     obstacle = -1
+
+    # unique identifier
+    index = -1
 
     def __init__(self, p, index, obstacle):
         self.adjacent = []
@@ -39,14 +58,27 @@ class Vertex:
                 + [v.index for v in self.adjacent].__repr__()
 
     def addAdjacent(self, vertex):
+        '''
+        adds vertex to self's adjancency list and vice versa
+        '''
+
         self.adjacent.append(vertex)
         vertex.adjacent.append(self)
 
     def isAdjacent(self, vertex):
+        '''
+        returns true iff self and vertex are adjacent
+        '''
+
         selfAdjInds = list(map(lambda v: v.index, self.adjacent))
         return vertex.index in selfAdjInds
 
     def removeAdjacent(self, vertex):
+        '''
+        remves vertex from self's adjacent vertex list and vice versa
+        if possible
+        '''
+
         selfAdjInds = list(map(lambda v: v.index, self.adjacent))
         vertexAdjInds = list(map(lambda v: v.index, vertex.adjacent))
         if vertex.index in selfAdjInds:
@@ -54,9 +86,17 @@ class Vertex:
             del vertex.adjacent[vertexAdjInds.index(self.index)]
 
 class Graph:
+    # vertices in the graph
     vertices = []
+
+    # used to ensure vertex identifiers are unique
     maxIndex = -1
+
     def addVertex(self, vertex):
+        '''
+        adds the specified vertex to the grpah
+        '''
+
         if vertex.index <= self.maxIndex:
             print('Error: bad vertex index (' + str(vertex.index) + ')')
         else:
@@ -67,6 +107,11 @@ class Graph:
         return self.vertices.__repr__()
 
 def splitWhen(pred, iterable):
+    '''
+    splits an iterable into two lists at the element x
+    for which pred(x) is true
+    '''
+
     l1 = []
     l2 = []
     hasSplit = False
@@ -80,11 +125,17 @@ def splitWhen(pred, iterable):
     return l1, l2
 
 def loadPolygons():
+    '''
+    loads data from files
+    '''
+
+    # load obstacles
     f1 = open('hw4_world_and_obstacles_convex.txt', 'r')
     obstacleStrings = f1.read().split('\n')[2:]
 
     world, obstacleStrings = splitWhen(lambda s: not ' ' in s, obstacleStrings)
     
+    makePoint = lambda xy: Point(xy[0], xy[1])
     toPoint = lambda s: makePoint(list(map(float, s.strip().split(' '))))
     world = list(map(toPoint, world))
     
@@ -94,8 +145,8 @@ def loadPolygons():
         if len(obstacle) > 0:
             obstacles = obstacles + [list(map(toPoint, obstacle))]
 
+    # create graph from start and end vertices
     f2 = open('hw4_start_goal.txt', 'r')
-
     graph = Graph()
     vertices = [ Vertex(toPoint(s), i, -1) for i, s in enumerate(f2.read().split('\n')[:-1]) ]
     for vertex in vertices:
@@ -104,6 +155,12 @@ def loadPolygons():
     return obstacles, world, graph
 
 def orientation(p1, p2, p3):
+    '''
+    calculates the orientation of the poitns p1, p2, and p3
+    returns -1 for clockwise orientation, 1 for clockwise,
+    0 for colinear
+    '''
+
     o = (p2.x - p1.x)*(p3.y - p1.y) - (p2.y - p1.y)*(p3.x - p1.x)
     if o > 0:
         return 1
@@ -112,11 +169,20 @@ def orientation(p1, p2, p3):
     return 0
 
 def pointOrderKey(p, q):
+    '''
+    converts a point q to a tuple of values by which to sort for
+    the convex hull algorithm
+    '''
+
     angle = (math.atan2(q.y - p.y, q.x - p.x)) % (2*math.pi)
     return (angle, (-1 if angle > math.pi/4 else 1) *
             ((p.x - q.x)**2 + (p.y - q.y)**2)**0.5)
 
 def convexHull(points):
+    '''
+    computes the convex hull for a set of poitns
+    '''
+
     p = points[0]
     for point in points:
         if point.y < p.y or (point.y == p.y and point.x < p.x):
@@ -139,6 +205,10 @@ def convexHull(points):
     return [point for i, point in enumerate(orderedPoints) if isInHull[i]]
 
 def growPolygons(polygons):
+    '''
+    grows the polygons by the size of the roomba
+    '''
+
     createDiam = 0.35
     grownPolygons = []
 
@@ -154,14 +224,21 @@ def growPolygons(polygons):
     return grownPolygons
 
 def intersects(p1, p2, p3, p4):
+    '''
+    returns true iff the segment p1 p2 intersects p3 p4
+    endpoints don't count for intersections
+    '''
+
     return orientation(p1, p2, p3) != orientation(p1, p2, p4) and \
             orientation(p3, p4, p1) != orientation(p3, p4, p2) or \
             p1 == p3 or p1 == p4 or p2 == p3 or p2 == p4
 
 def isVisible(v1, v2, obstacles, world):
+    '''
+    returns true iff v1 is visible from v2
+    '''
+
     for i, obstacle in enumerate(obstacles + [world]):
-        if v1.obstacle == v2.obstacle and v1.obstacle == i:
-            break
 
         p1 = Point(v1.p.x, v1.p.y)
         p2 = Point(v2.p.x, v2.p.y)
@@ -174,19 +251,27 @@ def isVisible(v1, v2, obstacles, world):
             p2.shift(p1, -0.01)
             p1.shift(p2, 100)
 
-        for j in range(len(obstacle)):
-            if intersects(p1, p2,
-                    obstacle[j], obstacle[(j + 1) % len(obstacle)]):
-                return False
+        # since vertices blocked by their own obstacle won't be added anyways
+        if not (v1.obstacle == v2.obstacle and v1.obstacle == i):
+            for j in range(len(obstacle)):
+                if intersects(p1, p2,
+                        obstacle[j], obstacle[(j + 1) % len(obstacle)]):
+                    return False
 
     return True
 
 def createGraph():
+    '''
+    creates the visibility graph and returns all data necessary for
+    visualization
+    '''
+
     obstacles, world, graph = loadPolygons()
     start_goal = list(graph.vertices)
     grownObstacles = growPolygons(obstacles)
     index = graph.maxIndex + 1
 
+    # add vertices for obstacles and edges for polygon edges
     for obsInd, obstacle in enumerate(grownObstacles):
         vertices = []
         for point in obstacle:
@@ -198,6 +283,8 @@ def createGraph():
         for i in range(len(vertices)):
             vertices[i].addAdjacent(vertices[(i + 1) % len(vertices)])
 
+    # compute visibility between vertices, with special cases for vertices
+    # on the same obstacle
     size = len(graph.vertices)
     for v1i in range(size):
         v1 = graph.vertices[v1i]

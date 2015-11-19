@@ -1,39 +1,16 @@
+'''
+Homework 4
+Team 10
+Authors: Jett Andersen, Tia Zhao, Piyali Mukherjee
+'''
+
 from visibility import *
 
-''' 
-Test on sample graph
-Path should be 0 -> 1 -> 2 -> 3
-'''
-#graph = []
-#points = []
-#points.append(Point(0,0))
-#points.append(Point(1,0))
-#points.append(Point(5,0))
-#points.append(Point(5,0))
-#points.append(Point(0,3))
-#points.append(Point(1,1))
-#points.append(Point(2,2))
-#
-#for i in range(len(points)):
-#    graph.append(Vertex(points[i],i,-1))
-#
-#graph[0].addAdjacent(graph[1])
-#graph[0].addAdjacent(graph[4])
-#graph[0].addAdjacent(graph[5])
-#graph[1].addAdjacent(graph[2])
-#graph[1].addAdjacent(graph[5])
-#graph[2].addAdjacent(graph[3])
-#graph[2].addAdjacent(graph[6])
-#graph[3].addAdjacent(graph[6])
-#graph[4].addAdjacent(graph[5])
-#graph[4].addAdjacent(graph[6])
-#graph[5].addAdjacent(graph[6])
-
-
-
-
-
 def dijkstra(vertices, start, target):
+    '''
+    returns a list of vertices corresponding to the shortest
+    path between start and target along the given vertices
+    '''
     
     original = {}
     graph = {}
@@ -76,7 +53,6 @@ def dijkstra(vertices, start, target):
     path.append(start)
         
     path.reverse()
-    print(path)
     return path
     
 def minUnvisited(unvisited):
@@ -86,5 +62,3 @@ def minUnvisited(unvisited):
             positives.pop(i)
             
     return min(positives, key=positives.get)
-    
-#dijkstra(graph, graph[0], graph[3])

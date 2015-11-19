@@ -1,0 +1,11 @@
+Homework 4
+Team 10
+Jett Andersen, Tia Zhao, Piyali Mukherjee
+
+To compile and run:
+1) On Ubuntu, use 'sudo apt-get install python3-tk' to install tkinter if
+   necessary.
+2) Run python3 frontend.py
+
+Dijkstra's algorithm can be found in dijkstra.py. All other algorithms can be
+found in visibility.py in the clearly named functions.
