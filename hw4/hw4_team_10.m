@@ -42,7 +42,7 @@ function hw4_team_10(serPort)
         rot = [rot r];
     end
     
-    v = 0.5;
+    v = 0.35;
     
     AngleSensorRoomba(serPort);
     DistanceSensorRoomba(serPort);
@@ -88,7 +88,7 @@ function position = moveStraight(serPort, v, position, ...
             % set position to goal point + extra padding
             % ***make sure pad matches the difference between robot 
             % diameter and obstacle growth size
-            pad = 0.1;
+            pad = 0.06;
             dx = pad * cos(orientation);
             dy = pad * sin(orientation);
             position = finPos + [dx, dy];
@@ -105,7 +105,7 @@ end
 % Rotates the robot at approximately the angle specified
 function orientation = rotate(serPort, orientation, angleToTurn, pauseTime)
     v = 0;
-    w = sign(angleToTurn)*v2w(v);
+    w = sign(angleToTurn)*v2w(v)*.75;
     startOrientation = orientation;
     
     SetFwdVelAngVelCreate(serPort, v, w);
