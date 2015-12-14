@@ -3,7 +3,6 @@ function [area, centroid] = imgfind(image, color)
     height = size(image, 1);
 
     colorDistThreshold = sqrt(sum(color.^2)) * 0.2;
-    
     imdouble = im2double(image);
     distMat = sqrt(sum((imdouble - repmat(color, height, width)).^2, 3));
     mask = distMat < colorDistThreshold;
@@ -37,20 +36,12 @@ function [area, centroid] = imgfind(image, color)
 %     end
     
     [blobs, numBlobs] = bwlabel(mask, 4);
-
     blobSizes = zeros(1, numBlobs);
     for i=1:height
         for j=1:width
             if blobs(i, j) ~= 0
                 blob = blobs(i, j);
                 blobSizes(blob) = blobSizes(blob) + 1;
-            end
-        end
-    end
-
-%     for i=1:height
-%         for j=1:width
-%             if blobs(i, j) ~= 0
 %                 blobs(i, j) = min(eqs{blobs(i, j)});
 %                 blob = blobs(i, j);
 %                 sizeInc = blob - max(size(blobSizes));
@@ -61,17 +52,21 @@ function [area, centroid] = imgfind(image, color)
 %                 else
 %                     blobSizes(blob) = blobSizes(blob) + 1;
 %                 end
-%             end
-%         end
-%     end
+            end
+        end
+    end
+
+
     [~, biggestBlob] = max(blobSizes);
+    biggestBlob = repmat(biggestBlob, size(blobs, 1), size(blobs, 2));
     trackedObject = blobs == biggestBlob;
+    imshow(trackedObject);
 
     area = sum(trackedObject(:));
     centroid = [0, 0];
     for i=1:height
         for j = 1:width
-            if(trackedObject(i, j) == 1)
+            if trackedObject(i, j)
                 centroid = centroid + [j, i];
             end
         end
