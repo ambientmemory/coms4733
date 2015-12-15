@@ -1,5 +1,5 @@
 function hw5_team_10(serPort)
-    url = 'http://192.168.0.101/snapshot.cgi?user=admin&pwd=&resolution=10&rate=0';
+    url = 'http://192.168.0.100/img/snapshot.cgi?user=admin&pwd=&resolution=10&rate=0';
     image = imread(url);
     
     width = size(image, 2);
@@ -22,7 +22,7 @@ function hw5_team_10(serPort)
     orientation = 0;
     pauseTime = 0.1;
     v = 0.05;
-    distToMove = 0.01;
+    distToMove = 0.04;
     angleToTurn = pi/32;
     while 1
         image = imread(url);
@@ -63,6 +63,7 @@ function position = moveStraight(serPort, v, position, ...
         pause(pauseTime);
         position = updatePosition(serPort, position, orientation);
     end 
+    SetFwdVelAngVelCreate(serPort, 0, 0);
 end
 
 function orientation = rotate(serPort, orientation, angleToTurn, pauseTime)

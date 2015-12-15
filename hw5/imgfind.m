@@ -2,7 +2,7 @@ function [area, centroid] = imgfind(image, color)
     width = size(image, 2);
     height = size(image, 1);
 
-    colorDistThreshold = sqrt(sum(color.^2)) * 0.2;
+    colorDistThreshold = sqrt(sum(color.^2)) * 0.3
     imdouble = im2double(image);
     distMat = sqrt(sum((imdouble - repmat(color, height, width)).^2, 3));
     mask = distMat < colorDistThreshold;
