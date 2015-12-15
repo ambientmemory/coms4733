@@ -44,69 +44,67 @@ function hw5_team_10_part2(serPort)
         
         [curArea, curCentroid] = imgfind(image, color)
         
-        %If door is still large enough in frame, brings us to closer to door
-        if curArea > 0.1 %change this threshold later
+        % If door is still large enough in frame, brings us to closer to door
+        if curArea > 0.1 % may change this threshold later, possibly to 0?
             position = moveStraight(serPort, v, position, orientation, ...
                 pauseTime, distToMove);
         else 
             stay_running_inner=0;
         end 
         
-        %Break out of the inner loop
+        % Break out of the inner loop if door has exited frame
         if stay_running_inner == 0
            break
         end
              imdouble = im2double(image);
              color2 = getColor(imdouble, floor(curCentroid(2)), ...
                  floor(curCentroid(1)));
-             %color = color*.75 + color2*.25;
-    end %end of giant while
+    end % end of giant while
         
 
-position = moveStraight(serPort, v, position, orientation, ...
-                pauseTime, 3.5); % change this threshold later
+    position = moveStraight(serPort, v, position, orientation, ...
+                pauseTime, 3.5); % hardcoded distance...test later
 
-prevArea = 0;             
- while 1
+    prevArea = 0;            
+    while 1
         image = imread(url);
         stay_running_inner = 1; 
         
         [curArea, curCentroid] = imgfind(image, color)
         
-        %If door is still large enough in frame, brings us to closer to door
-        if curArea >= prevArea %change this threshold later
+        % Rotates until door has max area
+        if curArea >= prevArea
             orientation = rotate(serPort, orinetation, angleToTurn, ...
                 pauseTime);
         else 
             stay_running_inner=0;
         end 
         
-        %Break out of the inner loop
+        % Break out of the inner loop if area of door begins to shrink
         if stay_running_inner == 0
            break
         end
              imdouble = im2double(image);
              color2 = getColor(imdouble, floor(curCentroid(2)), ...
                  floor(curCentroid(1)));
-             %color = color*.75 + color2*.25;
-    prevArea = curArea; %update the old area 
- end % end of giant while 2
+        prevArea = curArea; % update the old area
+        
+    end % end of giant while 2
 
- bumped = false; 
- while 1 %For knocking and bumping
-    position = moveStraight(serPort, v, position, orientation, ...
-                pauseTime, distToMove); % change this threshold later
-% check for bumper hits here
-    [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
-        BumpsWheelDropsSensorsRoomba(serPort);
-     bumped = BumpRight || BumpLeft || BumpFront; 
-    if bumped
-        %make a sound here
-        position =  moveStraight(serPort, -v, position, orientation, ...
-                pauseTime, 0.5); %change this threshold later
-        BeepRoomba(serPort);    
-    end
- end %end while loop #3
+    bumped = false;
+    while 1 % For knocking: move forward until bumped
+        position = moveStraight(serPort, v, position, orientation, ...
+                    pauseTime, distToMove);
+        % check for bumper hits here
+        [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
+            BumpsWheelDropsSensorsRoomba(serPort);
+         bumped = BumpRight || BumpLeft || BumpFront; 
+        if bumped
+            position =  moveStraight(serPort, -v, position, orientation, ...
+                    pauseTime, 0.3); % hardcoded back up distance
+            BeepRoomba(serPort); % beeps 
+        end
+    end %end while loop 3
  
 end
 
