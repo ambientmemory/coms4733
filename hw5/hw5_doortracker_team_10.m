@@ -1,5 +1,19 @@
-function hw5_team_10(serPort)
-    url = 'http://192.168.0.100/img/snapshot.cgi?user=admin&pwd=&resolution=10&rate=0';
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% COMS W4733 Computational Aspects of Robotics 2015
+%
+% Homework 5
+% Part 2
+%
+% Team number: 10
+% Team leader: Jett Andersen (jca2136)
+% Team members: Tia Zhao (tz2191), Piyali Mukherjee (pm2678)
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function hw5_team_10_part2(serPort)
+
+% PART 2   
+    url = 'http://192.168.0.101/snapshot.cgi?user=admin&pwd=&resolution=10&rate=0';
     image = imread(url);
     
     width = size(image, 2);
@@ -22,31 +36,76 @@ function hw5_team_10(serPort)
     orientation = 0;
     pauseTime = 0.1;
     v = 0.05;
-    distToMove = 0.04;
+    distToMove = 0.01;
     angleToTurn = pi/32;
     while 1
         image = imread(url);
+        stay_running_inner = 1; 
+        
         [curArea, curCentroid] = imgfind(image, color)
-        if curArea > area * 1.25
-            position = moveStraight(serPort, -v, position, orientation, ...
-                pauseTime, distToMove);
-        elseif area > curArea * 1.25
+        
+        % If door is still large enough in frame, brings us to closer to door
+        if curArea > 0.1 % may change this threshold later, possibly to 0?
             position = moveStraight(serPort, v, position, orientation, ...
                 pauseTime, distToMove);
+        else 
+            stay_running_inner=0;
+        end 
+        
+        % Break out of the inner loop if door has exited frame
+        if stay_running_inner == 0
+           break
         end
-        if curCentroid(1) > centroid(1) * 1.25
-            orientation = rotate(serPort, orientation, -angleToTurn, ...
-                pauseTime);
-        elseif centroid(1) > curCentroid(1) * 1.25
-            orientation = rotate(serPort, orientation, angleToTurn, ...
-                pauseTime);
-        else
              imdouble = im2double(image);
              color2 = getColor(imdouble, floor(curCentroid(2)), ...
                  floor(curCentroid(1)));
-             %color = color*.75 + color2*.25;
+    end % end of giant while
+        
+
+    position = moveStraight(serPort, v, position, orientation, ...
+                pauseTime, 3.5); % hardcoded distance...test later
+
+    prevArea = 0;            
+    while 1
+        image = imread(url);
+        stay_running_inner = 1; 
+        
+        [curArea, curCentroid] = imgfind(image, color)
+        
+        % Rotates until door has max area
+        if curArea >= prevArea
+            orientation = rotate(serPort, orinetation, angleToTurn, ...
+                pauseTime);
+        else 
+            stay_running_inner=0;
+        end 
+        
+        % Break out of the inner loop if area of door begins to shrink
+        if stay_running_inner == 0
+           break
         end
-    end
+             imdouble = im2double(image);
+             color2 = getColor(imdouble, floor(curCentroid(2)), ...
+                 floor(curCentroid(1)));
+        prevArea = curArea; % update the old area
+        
+    end % end of giant while 2
+
+    bumped = false;
+    while 1 % For knocking: move forward until bumped
+        position = moveStraight(serPort, v, position, orientation, ...
+                    pauseTime, distToMove);
+        % check for bumper hits here
+        [BumpRight, BumpLeft, ~, ~, ~, BumpFront] = ...
+            BumpsWheelDropsSensorsRoomba(serPort);
+         bumped = BumpRight || BumpLeft || BumpFront; 
+        if bumped
+            position =  moveStraight(serPort, -v, position, orientation, ...
+                    pauseTime, 0.3); % hardcoded back up distance
+            BeepRoomba(serPort); % beeps 
+        end
+    end %end while loop 3
+ 
 end
 
 function position = moveStraight(serPort, v, position, ...
@@ -63,7 +122,6 @@ function position = moveStraight(serPort, v, position, ...
         pause(pauseTime);
         position = updatePosition(serPort, position, orientation);
     end 
-    SetFwdVelAngVelCreate(serPort, 0, 0);
 end
 
 function orientation = rotate(serPort, orientation, angleToTurn, pauseTime)
